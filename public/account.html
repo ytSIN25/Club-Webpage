@@ -139,7 +139,6 @@
 <body>
   <script src="shared.js"></script>
   <script>
-    Auth.requireAuth();
     buildNav('account');
   </script>
 
@@ -271,7 +270,25 @@
   </div>
 
   <script>
-    const user = Auth.getCurrentUser();
+    let user = Auth.getCurrentUser();
+
+    // Guest state: show prompt instead of crashing
+    if (!user) {
+      document.getElementById('profileHeader').innerHTML = `
+        <div style="text-align:center;padding:20px;width:100%;">
+          <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
+          <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;margin-bottom:10px;">Sign In to View Your Profile</h2>
+          <p style="color:var(--text-secondary);margin-bottom:24px;">Create an account or log in to manage your CSSC profile, view joined events, and more.</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="Auth.showLoginModal(() => location.reload())">Sign In</button>
+            <button class="btn btn-secondary" onclick="Auth.showLoginModal(() => location.reload(), 'signup')">Join CSSC Free →</button>
+          </div>
+        </div>
+      `;
+      document.querySelector('.account-grid').style.display = 'none';
+    } else {
+      loadProfile();
+    }
 
     function loadProfile() {
       // Avatar
@@ -393,8 +410,6 @@
     function confirmLogout() {
       if (confirm('Are you sure you want to log out?')) Auth.logout();
     }
-
-    loadProfile();
   </script>
 
   <script>buildFooter();</script>

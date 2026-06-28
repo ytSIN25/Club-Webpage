@@ -3,7 +3,6 @@
 // =============================================
 
 // ── Auth State ──
-// ── Auth State ──
 const Auth = {
   activePage: '',
   getCurrentUser() {
@@ -638,10 +637,8 @@ function buildFooter() {
           <div>
             <h4 class="footer-heading">Connect</h4>
             <div class="footer-links">
-              <a href="#">GitHub</a>
-              <a href="#">Discord</a>
               <a href="#">Instagram</a>
-              <a href="#">LinkedIn</a>
+              <a href="contact.html">Contact Us</a>
             </div>
           </div>
         </div>

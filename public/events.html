@@ -244,15 +244,14 @@
 
       <!-- Header -->
       <div class="page-hero" style="text-align:left;padding:40px 0 32px;">
-        <div class="section-label">// discover & join</div>
-        <h1 class="page-hero-title">Event <span class="text-gradient">Hub</span></h1>
-        <p class="page-hero-subtitle">Browse all upcoming events, workshops, and competitions — and register your spot.</p>
-      </div>
-
-      <!-- Section Toggle -->
-      <div class="section-toggle">
-        <button class="section-toggle-btn active" id="toggleUpcoming" onclick="showTab('upcoming')">🔥 Upcoming</button>
-        <button class="section-toggle-btn" id="togglePast" onclick="showTab('past')">📚 Past Events</button>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div class="section-label">// discover &amp; join</div>
+            <h1 class="page-hero-title">Event <span class="text-gradient">Hub</span></h1>
+            <p class="page-hero-subtitle">Browse upcoming events, workshops, and competitions — and register your spot.</p>
+          </div>
+          <a href="past-events.html" class="btn btn-secondary" style="white-space:nowrap;margin-top:8px;" id="viewPastEventsBtn">📚 View Past Events →</a>
+        </div>
       </div>
 
       <!-- Filters -->
@@ -280,7 +279,7 @@
 
   <script>
     let user = Auth.getCurrentUser();
-    let currentTab = 'upcoming';
+    const currentTab = 'upcoming'; // Event Hub always shows upcoming only
     let currentFilter = 'All';
 
     function getCategoryIcon(cat) {
@@ -365,12 +364,6 @@
       initScrollAnimations();
     }
 
-    function showTab(tab) {
-      currentTab = tab;
-      document.getElementById('toggleUpcoming').classList.toggle('active', tab === 'upcoming');
-      document.getElementById('togglePast').classList.toggle('active', tab === 'past');
-      renderEvents();
-    }
 
     function setFilter(cat, btn) {
       currentFilter = cat;
