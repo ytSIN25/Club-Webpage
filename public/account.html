@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account — CSSC</title>
+  <meta name="description" content="Manage your CSSC account details and view your joined activities." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .profile-header {
+      background: var(--gradient-card);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: var(--border-radius-xl);
+      padding: 48px 40px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-primary);
+    }
+
+    .avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 0 30px var(--purple-glow);
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    .profile-info { flex: 1; }
+
+    .profile-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .profile-email {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+
+    .profile-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .account-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      width: 120px;
+      flex-shrink: 0;
+      padding-top: 2px;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-sm);
+      transition: var(--transition);
+      margin-bottom: 10px;
+    }
+
+    .activity-item:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(124,58,237,0.3);
+    }
+
+    .activity-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .edit-section { display: none; }
+    .edit-section.active { display: block; }
+    .view-section.hidden { display: none; }
+
+    @media (max-width: 768px) {
+      .profile-header { flex-direction: column; text-align: center; }
+      .profile-meta { justify-content: center; }
+      .account-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <script src="shared.js"></script>
+  <script>
+    Auth.requireAuth();
+    buildNav('account');
+  </script>
+
+  <div class="page-wrapper">
+    <div class="container" style="padding-top:40px;padding-bottom:80px;">
+
+      <!-- Page Header -->
+      <div class="section-label mb-24">// my account</div>
+
+      <!-- Profile Header -->
+      <div class="profile-header animate-fade-up" id="profileHeader">
+        <div class="avatar" id="userAvatar">?</div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName">Loading...</div>
+          <div class="profile-email" id="profileEmail"></div>
+          <div class="profile-meta">
+            <span class="badge badge-purple" id="roleBadge">Member</span>
+            <span class="badge badge-cyan" id="joinedBadge">Joined Jan 2025</span>
+            <span class="badge badge-green" id="activityBadge">0 Events</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+          <button class="btn btn-outline btn-sm" id="editProfileBtn" onclick="toggleEdit()">✏ Edit Profile</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmLogout()">Logout</button>
+        </div>
+      </div>
+
+      <div class="account-grid">
+
+        <!-- Left: Account Details -->
+        <div>
+          <div class="card-glass">
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:20px;">Account Details</h2>
+
+            <!-- View Mode -->
+            <div id="viewSection" class="view-section">
+              <div class="info-row">
+                <div class="info-label">Full Name</div>
+                <div class="info-value" id="infoName">—</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Email</div>
+                <div class="info-value" id="infoEmail">—</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Student ID</div>
+                <div class="info-value" id="infoStudentId">—</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Bio</div>
+                <div class="info-value" id="infoBio" style="color:var(--text-secondary);">—</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Role</div>
+                <div class="info-value" id="infoRole">Member</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Joined</div>
+                <div class="info-value" id="infoJoined">—</div>
+              </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div id="editSection" class="edit-section">
+              <div class="alert alert-success hidden" id="editSuccess">
+                <span>✓</span> Profile updated successfully!
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="editFirstName">First Name</label>
+                <input type="text" id="editFirstName" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="editLastName">Last Name</label>
+                <input type="text" id="editLastName" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="editEmail" disabled style="opacity:0.5;cursor:not-allowed;" />
+                <small class="text-muted" style="font-size:0.75rem;">Email cannot be changed</small>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="editBio">Bio <span class="text-muted">(optional)</span></label>
+                <textarea id="editBio" class="form-input" rows="3" placeholder="Tell us about yourself..."></textarea>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn btn-primary" onclick="saveProfile()" id="saveBtn">Save Changes</button>
+                <button class="btn btn-secondary" onclick="toggleEdit()">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Change Password -->
+          <div class="card-glass mt-24" style="margin-top:20px;">
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:20px;">Change Password</h2>
+            <div class="alert alert-success hidden" id="pwdSuccess"><span>✓</span> Password changed successfully!</div>
+            <div class="alert alert-error hidden" id="pwdError"><span>✕</span> <span id="pwdErrMsg"></span></div>
+            <div class="form-group">
+              <label class="form-label" for="currentPwd">Current Password</label>
+              <input type="password" id="currentPwd" class="form-input" placeholder="Enter current password" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="newPwd">New Password</label>
+              <input type="password" id="newPwd" class="form-input" placeholder="Min. 8 characters" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="confirmNewPwd">Confirm New Password</label>
+              <input type="password" id="confirmNewPwd" class="form-input" placeholder="Re-enter new password" />
+            </div>
+            <button class="btn btn-outline" onclick="changePassword()" id="changePwdBtn">Update Password</button>
+          </div>
+        </div>
+
+        <!-- Right: Joined Activities -->
+        <div>
+          <div class="card-glass" style="height:fit-content;">
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:20px;">🎟 Joined Activities</h2>
+            <div id="joinedActivitiesList">
+              <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+                <div style="font-size:2.5rem;margin-bottom:12px;">📭</div>
+                <div>No activities joined yet.</div>
+                <a href="events.html" class="btn btn-primary btn-sm mt-16" style="display:inline-flex;margin-top:16px;">Browse Events →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const user = Auth.getCurrentUser();
+
+    function loadProfile() {
+      // Avatar
+      const initials = (user.firstName ? user.firstName[0] : user.name[0]).toUpperCase();
+      document.getElementById('userAvatar').textContent = initials;
+      document.getElementById('profileName').textContent = user.name;
+      document.getElementById('profileEmail').textContent = user.email;
+      document.getElementById('roleBadge').textContent = user.role === 'admin' ? '⚙ Admin' : '👤 Member';
+      document.getElementById('joinedBadge').textContent = 'Joined ' + new Date(user.joinedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      document.getElementById('activityBadge').textContent = (user.joinedActivities || []).length + ' Events';
+
+      // Info rows
+      document.getElementById('infoName').textContent = user.name;
+      document.getElementById('infoEmail').textContent = user.email;
+      document.getElementById('infoStudentId').textContent = user.studentId || 'Not provided';
+      document.getElementById('infoBio').textContent = user.bio || 'No bio added yet.';
+      document.getElementById('infoRole').textContent = user.role === 'admin' ? 'Administrator' : 'Member';
+      document.getElementById('infoJoined').textContent = formatDate(user.joinedDate);
+
+      // Edit fields
+      document.getElementById('editFirstName').value = user.firstName || user.name.split(' ')[0];
+      document.getElementById('editLastName').value = user.lastName || user.name.split(' ').slice(1).join(' ');
+      document.getElementById('editEmail').value = user.email;
+      document.getElementById('editBio').value = user.bio || '';
+
+      // Joined Activities
+      const activities = user.joinedActivities || [];
+      const actList = document.getElementById('joinedActivitiesList');
+      if (activities.length === 0) return;
+      const evts = activities.map(id => Events.get(id)).filter(Boolean);
+      actList.innerHTML = evts.map(ev => `
+        <div class="activity-item">
+          <div class="activity-icon" style="background:rgba(124,58,237,0.12);">
+            ${ev.isPast ? '✅' : '🔵'}
+          </div>
+          <div style="flex:1;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.9rem;">${ev.title}</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;">${formatDate(ev.date)} · ${ev.location}</div>
+          </div>
+          <div>
+            <span class="badge ${ev.isPast ? 'badge-green' : 'badge-cyan'}">${ev.isPast ? 'Attended' : 'Registered'}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleEdit() {
+      const view = document.getElementById('viewSection');
+      const edit = document.getElementById('editSection');
+      const btn = document.getElementById('editProfileBtn');
+      const isEditing = edit.classList.contains('active');
+      if (isEditing) {
+        edit.classList.remove('active');
+        view.classList.remove('hidden');
+        btn.textContent = '✏ Edit Profile';
+      } else {
+        edit.classList.add('active');
+        view.classList.add('hidden');
+        btn.textContent = '← Cancel';
+      }
+    }
+
+    function saveProfile() {
+      const firstName = document.getElementById('editFirstName').value.trim();
+      const lastName = document.getElementById('editLastName').value.trim();
+      const bio = document.getElementById('editBio').value.trim();
+
+      if (!firstName) return Toast.show('First name is required.', 'error');
+
+      Users.update(user.email, {
+        firstName, lastName,
+        name: `${firstName} ${lastName}`,
+        bio
+      });
+
+      document.getElementById('editSuccess').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('editSuccess').classList.add('hidden');
+        toggleEdit();
+        location.reload();
+      }, 1200);
+    }
+
+    function changePassword() {
+      const current = document.getElementById('currentPwd').value;
+      const next = document.getElementById('newPwd').value;
+      const confirm = document.getElementById('confirmNewPwd').value;
+      const btn = document.getElementById('changePwdBtn');
+      const errDiv = document.getElementById('pwdError');
+      const errMsg = document.getElementById('pwdErrMsg');
+      const success = document.getElementById('pwdSuccess');
+
+      errDiv.classList.add('hidden');
+      success.classList.add('hidden');
+
+      if (current !== user.password) {
+        errMsg.textContent = 'Current password is incorrect.';
+        errDiv.classList.remove('hidden');
+        return;
+      }
+      if (next.length < 8) {
+        errMsg.textContent = 'New password must be at least 8 characters.';
+        errDiv.classList.remove('hidden');
+        return;
+      }
+      if (next !== confirm) {
+        errMsg.textContent = 'New passwords do not match.';
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      Users.update(user.email, { password: next });
+      success.classList.remove('hidden');
+      document.getElementById('currentPwd').value = '';
+      document.getElementById('newPwd').value = '';
+      document.getElementById('confirmNewPwd').value = '';
+    }
+
+    function confirmLogout() {
+      if (confirm('Are you sure you want to log out?')) Auth.logout();
+    }
+
+    loadProfile();
+  </script>
+
+  <script>buildFooter();</script>
+</body>
+</html>

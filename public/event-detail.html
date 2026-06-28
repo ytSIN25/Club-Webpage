@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event — CSSC</title>
+  <meta name="description" content="Event details — CSSC" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .event-hero {
+      height: 300px;
+      background: var(--gradient-card);
+      border-radius: var(--border-radius-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+
+    .event-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(124,58,237,0.4), transparent 60%),
+                  radial-gradient(ellipse at 70% 50%, rgba(6,182,212,0.25), transparent 60%);
+    }
+
+    .event-hero-icon {
+      font-size: 5rem;
+      position: relative;
+      z-index: 1;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .event-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .event-meta-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-lg);
+      padding: 28px;
+      position: sticky;
+      top: 90px;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .meta-row:last-of-type { border-bottom: none; }
+
+    .meta-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(124,58,237,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .meta-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 3px; letter-spacing: 0.5px; }
+    .meta-value { font-size: 0.9rem; font-weight: 500; }
+
+    .event-description {
+      font-size: 0.98rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .event-description p { margin-bottom: 16px; }
+
+    .tags-wrap { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
+
+    .tag {
+      padding: 5px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .attendees-preview {
+      display: flex;
+      align-items: center;
+      gap: -6px;
+      margin-top: 12px;
+    }
+
+    .attendee-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      border: 2px solid var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-left: -6px;
+    }
+
+    .attendee-avatar:first-child { margin-left: 0; }
+
+    .progress-ring {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      flex-shrink: 0;
+    }
+
+    .progress-ring svg { transform: rotate(-90deg); }
+    .progress-ring .ring-bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 6; }
+    .progress-ring .ring-fill { fill: none; stroke-width: 6; stroke-linecap: round; stroke: url(#ringGrad); }
+    .progress-ring .ring-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.85rem; }
+
+    @media (max-width: 900px) {
+      .event-detail-grid { grid-template-columns: 1fr; }
+      .event-meta-card { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <script src="shared.js"></script>
+  <script>
+    Auth.requireAuth();
+    buildNav('events');
+  </script>
+
+  <div class="page-wrapper">
+    <div class="container" style="padding-top:40px;padding-bottom:80px;">
+
+      <!-- Breadcrumb -->
+      <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--text-muted);margin-bottom:24px;">
+        <a href="home.html" style="color:var(--text-muted);transition:color 0.2s;" onmouseover="this.style.color='var(--purple-light)'" onmouseout="this.style.color='var(--text-muted)'">Home</a>
+        <span>›</span>
+        <a href="events.html" style="color:var(--text-muted);transition:color 0.2s;" onmouseover="this.style.color='var(--purple-light)'" onmouseout="this.style.color='var(--text-muted)'">Event Hub</a>
+        <span>›</span>
+        <span id="breadcrumbTitle" style="color:var(--text-secondary);">Loading...</span>
+      </div>
+
+      <!-- Not found state -->
+      <div id="notFoundState" class="hidden" style="text-align:center;padding:100px 20px;">
+        <div style="font-size:4rem;margin-bottom:20px;">😕</div>
+        <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;margin-bottom:10px;">Event Not Found</h2>
+        <p style="color:var(--text-secondary);margin-bottom:24px;">The event you're looking for doesn't exist or was removed.</p>
+        <a href="events.html" class="btn btn-primary">← Back to Event Hub</a>
+      </div>
+
+      <!-- Event Detail -->
+      <div id="eventDetail">
+        <!-- Hero -->
+        <div class="event-hero animate-fade-up" id="eventHero">
+          <div class="event-hero-icon" id="eventIcon">📅</div>
+        </div>
+
+        <!-- Detail Grid -->
+        <div class="event-detail-grid">
+
+          <!-- Left: Info -->
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+              <span class="badge" id="categoryBadge">Category</span>
+              <span class="badge badge-cyan" id="statusBadge">Upcoming</span>
+            </div>
+
+            <h1 style="font-family:'Space Grotesk',sans-serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;line-height:1.25;margin-bottom:16px;" id="eventTitle">Loading...</h1>
+
+            <div class="divider"></div>
+
+            <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1rem;margin-bottom:14px;">About this Event</h3>
+            <div class="event-description" id="eventDesc">Loading...</div>
+
+            <div class="tags-wrap" id="eventTags"></div>
+
+            <div class="divider"></div>
+
+            <!-- Attendees Section -->
+            <div style="margin-top:8px;">
+              <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1rem;margin-bottom:14px;" id="attendeesHeading">Attendees</h3>
+              <div style="display:flex;align-items:center;gap:16px;" id="attendeesSection">
+                <div id="attendeeAvatars" class="attendees-preview"></div>
+                <span style="font-size:0.9rem;color:var(--text-secondary);" id="attendeeCount"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Meta Card -->
+          <div>
+            <div class="event-meta-card animate-fade-up stagger-2">
+              <div style="text-align:center;margin-bottom:20px;" id="capacitySection">
+                <svg width="80" height="80" class="progress-ring">
+                  <defs>
+                    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#7c3aed"/>
+                      <stop offset="100%" stop-color="#06b6d4"/>
+                    </linearGradient>
+                  </defs>
+                  <circle class="ring-bg" cx="40" cy="40" r="34" />
+                  <circle class="ring-fill" cx="40" cy="40" r="34" id="ringFill" />
+                </svg>
+                <div class="progress-ring" style="position:absolute;width:80px;height:80px;margin:-80px auto 0;left:50%;transform:translateX(-50%);">
+                  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.85rem;" id="capacityText">0%</div>
+                </div>
+                <div style="margin-top:8px;font-size:0.85rem;color:var(--text-secondary);" id="capacityDetail"></div>
+              </div>
+
+              <div class="meta-row">
+                <div class="meta-icon">📅</div>
+                <div>
+                  <div class="meta-label">DATE</div>
+                  <div class="meta-value" id="metaDate">—</div>
+                </div>
+              </div>
+              <div class="meta-row">
+                <div class="meta-icon">🕐</div>
+                <div>
+                  <div class="meta-label">TIME</div>
+                  <div class="meta-value" id="metaTime">—</div>
+                </div>
+              </div>
+              <div class="meta-row">
+                <div class="meta-icon">📍</div>
+                <div>
+                  <div class="meta-label">LOCATION</div>
+                  <div class="meta-value" id="metaLocation">—</div>
+                </div>
+              </div>
+              <div class="meta-row">
+                <div class="meta-icon">👥</div>
+                <div>
+                  <div class="meta-label">CAPACITY</div>
+                  <div class="meta-value" id="metaCapacity">—</div>
+                </div>
+              </div>
+
+              <div style="margin-top:20px;" id="actionSection">
+                <button class="btn btn-primary btn-block btn-lg" id="actionBtn" onclick="handleAction()">Join Event →</button>
+                <div style="text-align:center;margin-top:10px;font-size:0.8rem;color:var(--text-muted);" id="actionNote"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get('id');
+    const user = Auth.getCurrentUser();
+
+    function getCategoryIcon(cat) {
+      const icons = { 'Competition': '🏆', 'Workshop': '🛠', 'Talk': '🎤', 'Study Group': '📖', 'Social': '🎉' };
+      return icons[cat] || '📅';
+    }
+
+    function loadEvent() {
+      if (!eventId) { showNotFound(); return; }
+      const ev = Events.get(eventId);
+      if (!ev) { showNotFound(); return; }
+
+      // Meta
+      document.title = ev.title + ' — CSSC';
+      document.getElementById('breadcrumbTitle').textContent = ev.title;
+      document.getElementById('eventIcon').textContent = getCategoryIcon(ev.category);
+      document.getElementById('eventTitle').textContent = ev.title;
+      document.getElementById('eventDesc').innerHTML = `<p>${ev.description.replace(/\n/g, '</p><p>')}</p>`;
+
+      // Badges
+      const catBadge = document.getElementById('categoryBadge');
+      catBadge.textContent = ev.category;
+      catBadge.className = 'badge ' + getCategoryBadgeClass(ev.category);
+
+      const statusBadge = document.getElementById('statusBadge');
+      if (ev.isPast) { statusBadge.textContent = '✓ Completed'; statusBadge.className = 'badge badge-green'; }
+      else { statusBadge.textContent = '● Upcoming'; statusBadge.className = 'badge badge-cyan'; }
+
+      // Tags
+      if (ev.tags) {
+        document.getElementById('eventTags').innerHTML = ev.tags.map(t => `<span class="tag">#${t}</span>`).join('');
+      }
+
+      // Meta Card
+      document.getElementById('metaDate').textContent = formatDate(ev.date);
+      document.getElementById('metaTime').textContent = formatTime(ev.time);
+      document.getElementById('metaLocation').textContent = ev.location;
+      document.getElementById('metaCapacity').textContent = ev.capacity ? ev.capacity + ' spots' : 'Unlimited';
+
+      // Capacity ring
+      const attended = (ev.attendees || []).length;
+      const pct = ev.capacity ? Math.min(100, Math.round((attended / ev.capacity) * 100)) : 0;
+      const circumference = 2 * Math.PI * 34;
+      const ring = document.getElementById('ringFill');
+      ring.style.strokeDasharray = circumference;
+      ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
+      document.getElementById('capacityText').textContent = pct + '%';
+      document.getElementById('capacityDetail').textContent = `${attended} of ${ev.capacity || '∞'} attending`;
+
+      // Attendees
+      const avatars = (ev.attendees || []).slice(0, 5).map(email => {
+        const u = Users.find(email);
+        const letter = u ? u.name[0].toUpperCase() : email[0].toUpperCase();
+        return `<div class="attendee-avatar">${letter}</div>`;
+      }).join('');
+      document.getElementById('attendeeAvatars').innerHTML = avatars;
+      document.getElementById('attendeeCount').textContent = attended > 0 ? `${attended} registered` : 'Be the first to register!';
+
+      // Action button
+      if (ev.isPast) {
+        document.getElementById('actionSection').innerHTML = '<div class="alert alert-info"><span>ℹ</span> This event has already taken place.</div>';
+      } else {
+        const isJoined = (user.joinedActivities || []).includes(eventId);
+        const isFull = ev.capacity && attended >= ev.capacity && !isJoined;
+        const btn = document.getElementById('actionBtn');
+        const note = document.getElementById('actionNote');
+        if (isJoined) {
+          btn.textContent = '✓ Registered';
+          btn.className = 'btn btn-outline btn-block btn-lg';
+          note.textContent = 'Click to unregister from this event';
+        } else if (isFull) {
+          btn.textContent = 'Event is Full';
+          btn.disabled = true;
+          btn.className = 'btn btn-secondary btn-block btn-lg';
+          note.textContent = `All ${ev.capacity} spots are taken.`;
+        } else {
+          note.textContent = `${ev.capacity ? ev.capacity - attended + ' spots left · ' : ''}Free to join`;
+        }
+      }
+    }
+
+    function showNotFound() {
+      document.getElementById('eventDetail').classList.add('hidden');
+      document.getElementById('notFoundState').classList.remove('hidden');
+    }
+
+    function handleAction() {
+      const ev = Events.get(eventId);
+      if (!ev || ev.isPast) return;
+      const isJoined = (user.joinedActivities || []).includes(eventId);
+      if (isJoined) {
+        if (confirm('Are you sure you want to unregister from this event?')) {
+          Events.leaveEvent(eventId, user.email);
+          const updated = Users.find(user.email);
+          Auth.setUser(updated);
+          Toast.show('You\'ve been unregistered.', 'info');
+          loadEvent();
+        }
+      } else {
+        Events.joinEvent(eventId, user.email);
+        const updated = Users.find(user.email);
+        Auth.setUser(updated);
+        Toast.show('You\'re registered! See you there 🎉', 'success');
+        loadEvent();
+      }
+    }
+
+    loadEvent();
+  </script>
+
+  <script>buildFooter();</script>
+</body>
+</html>

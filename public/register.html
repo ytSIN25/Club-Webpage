@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — CSSC</title>
+  <meta name="description" content="Create your free CSSC account and join a thriving community of CS students." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <script src="shared.js"></script>
+
+  <!-- Background Orbs -->
+  <div style="position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;">
+    <div style="position:absolute;width:500px;height:500px;top:-100px;right:-150px;background:radial-gradient(circle,rgba(6,182,212,0.2),transparent 70%);"></div>
+    <div style="position:absolute;width:400px;height:400px;bottom:-100px;left:-100px;background:radial-gradient(circle,rgba(124,58,237,0.18),transparent 70%);"></div>
+  </div>
+
+  <div class="auth-page">
+    <div class="auth-card animate-fade-up" style="position:relative;z-index:2;max-width:500px;">
+
+      <div class="auth-logo">
+        <div class="auth-logo-icon">💻</div>
+        <div class="auth-logo-text">CSSC<span class="text-purple">.</span></div>
+      </div>
+
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join the CSSC community — it's completely free</p>
+
+      <div class="alert alert-error hidden" id="regAlert">
+        <span>⚠</span> <span id="regAlertMsg"></span>
+      </div>
+
+      <form id="registerForm" novalidate>
+        <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="firstName">First Name</label>
+            <input type="text" id="firstName" class="form-input" placeholder="Jane" required />
+            <div class="form-error" id="firstNameError">Required</div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="lastName">Last Name</label>
+            <input type="text" id="lastName" class="form-input" placeholder="Doe" required />
+            <div class="form-error" id="lastNameError">Required</div>
+          </div>
+        </div>
+
+        <div class="form-group mt-16">
+          <label class="form-label" for="regEmail">University Email</label>
+          <input type="email" id="regEmail" class="form-input" placeholder="student@university.edu" required />
+          <div class="form-error" id="regEmailError">Please enter a valid email.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="studentId">Student ID <span class="text-muted">(optional)</span></label>
+          <input type="text" id="studentId" class="form-input" placeholder="e.g. STU2025001" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="regPassword">Password</label>
+          <div style="position:relative;">
+            <input type="password" id="regPassword" class="form-input" placeholder="Min. 8 characters" required style="padding-right:48px;" />
+            <button type="button" onclick="togglePwd('regPassword')" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;">👁</button>
+          </div>
+          <div class="form-error" id="regPwdError">Password must be at least 8 characters.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirmPassword">Confirm Password</label>
+          <input type="password" id="confirmPassword" class="form-input" placeholder="Re-enter password" required />
+          <div class="form-error" id="confirmPwdError">Passwords do not match.</div>
+        </div>
+
+        <!-- Password strength -->
+        <div id="strengthBar" style="height:4px;border-radius:2px;background:var(--glass-border);margin:-12px 0 16px;overflow:hidden;">
+          <div id="strengthFill" style="height:100%;width:0%;transition:all 0.3s ease;border-radius:2px;"></div>
+        </div>
+
+        <div class="form-group" style="display:flex;align-items:flex-start;gap:10px;">
+          <input type="checkbox" id="agreeTerms" style="margin-top:3px;accent-color:var(--purple);width:16px;height:16px;cursor:pointer;" />
+          <label for="agreeTerms" style="font-size:0.875rem;color:var(--text-secondary);cursor:pointer;line-height:1.5;">
+            I agree to the CSSC <a href="#" style="color:var(--purple-light);">Terms of Membership</a> and confirm I am a student of this institution.
+          </label>
+        </div>
+        <div class="form-error" id="termsError">You must agree to the terms.</div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg mt-8" id="registerBtn">
+          Create Account →
+        </button>
+      </form>
+
+      <div class="auth-footer mt-16">
+        Already have an account? <a href="login.html" id="goToLogin">Sign in →</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (Auth.isLoggedIn()) window.location.href = 'home.html';
+
+    function togglePwd(id) {
+      const el = document.getElementById(id);
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    // Password strength meter
+    document.getElementById('regPassword').addEventListener('input', function() {
+      const val = this.value;
+      let strength = 0;
+      if (val.length >= 8) strength++;
+      if (/[A-Z]/.test(val)) strength++;
+      if (/[0-9]/.test(val)) strength++;
+      if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+      const fill = document.getElementById('strengthFill');
+      const colors = ['#ef4444', '#f59e0b', '#10b981', '#06b6d4'];
+      const widths = ['25%', '50%', '75%', '100%'];
+      fill.style.width = val ? widths[strength - 1] || '10%' : '0%';
+      fill.style.background = val ? colors[strength - 1] || '#ef4444' : '';
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const studentId = document.getElementById('studentId').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirmPwd = document.getElementById('confirmPassword').value;
+      const agreed = document.getElementById('agreeTerms').checked;
+      const btn = document.getElementById('registerBtn');
+
+      let valid = true;
+
+      const setError = (id, errId, condition, msg) => {
+        if (condition) {
+          document.getElementById(id).classList.add('error');
+          document.getElementById(errId).classList.add('show');
+          if (msg) document.getElementById(errId).textContent = msg;
+          valid = false;
+        } else {
+          document.getElementById(id).classList.remove('error');
+          document.getElementById(errId).classList.remove('show');
+        }
+      };
+
+      setError('firstName', 'firstNameError', !firstName);
+      setError('lastName', 'lastNameError', !lastName);
+      setError('regEmail', 'regEmailError', !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+      setError('regPassword', 'regPwdError', password.length < 8, 'Password must be at least 8 characters.');
+      setError('confirmPassword', 'confirmPwdError', password !== confirmPwd, 'Passwords do not match.');
+
+      if (!agreed) {
+        document.getElementById('termsError').classList.add('show');
+        valid = false;
+      } else {
+        document.getElementById('termsError').classList.remove('show');
+      }
+
+      if (!valid) return;
+
+      // Check if email already exists
+      if (Users.find(email)) {
+        document.getElementById('regAlert').classList.remove('hidden');
+        document.getElementById('regAlertMsg').textContent = 'An account with this email already exists. Please log in.';
+        return;
+      }
+
+      btn.innerHTML = '<div class="spinner"></div> Creating account...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        const newUser = {
+          id: generateId(),
+          name: `${firstName} ${lastName}`,
+          firstName, lastName,
+          email,
+          studentId: studentId || null,
+          password,
+          role: 'member',
+          joinedDate: new Date().toISOString(),
+          joinedActivities: [],
+          bio: ''
+        };
+        Users.add(newUser);
+        Auth.setUser(newUser);
+        Toast.show('Welcome to CSSC, ' + firstName + '! 🎉', 'success');
+        setTimeout(() => window.location.href = 'home.html', 700);
+      }, 900);
+    });
+  </script>
+</body>
+</html>

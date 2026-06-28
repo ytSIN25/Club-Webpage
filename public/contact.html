@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — CSSC</title>
+  <meta name="description" content="Get in touch with the CSSC committee — we'd love to hear from you!" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    .contact-info-card {
+      background: var(--gradient-card);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: var(--border-radius-xl);
+      padding: 40px;
+      position: sticky;
+      top: 90px;
+    }
+
+    .contact-item {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .contact-item:last-child { margin-bottom: 0; }
+
+    .contact-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .contact-item-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .contact-item-value {
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .contact-item-sub {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .social-links-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .social-link-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-sm);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .social-link-card:hover {
+      background: rgba(124,58,237,0.1);
+      border-color: var(--purple);
+      transform: translateY(-2px);
+    }
+
+    .contact-form-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-xl);
+      padding: 44px;
+      backdrop-filter: blur(20px);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .subject-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+
+    .subject-tab {
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: 1px solid var(--glass-border);
+      background: transparent;
+      color: var(--text-secondary);
+      transition: var(--transition-fast);
+    }
+
+    .subject-tab.active, .subject-tab:hover {
+      background: rgba(124,58,237,0.2);
+      border-color: var(--purple);
+      color: var(--purple-light);
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .faq-item {
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-sm);
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .faq-question {
+      padding: 16px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: var(--transition-fast);
+      background: var(--bg-card);
+    }
+
+    .faq-question:hover { background: var(--bg-card-hover); }
+
+    .faq-answer {
+      display: none;
+      padding: 16px 20px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      background: rgba(124,58,237,0.03);
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .faq-answer.open { display: block; }
+
+    .faq-arrow {
+      transition: var(--transition-fast);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .faq-question.active .faq-arrow { transform: rotate(180deg); }
+
+    @media (max-width: 900px) {
+      .contact-grid { grid-template-columns: 1fr; }
+      .contact-info-card { position: static; }
+    }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .contact-form-card { padding: 28px 20px; }
+      .social-links-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <script src="shared.js"></script>
+  <script>
+    Auth.requireAuth();
+    buildNav('contact');
+  </script>
+
+  <div class="page-wrapper">
+    <div class="container" style="padding-top:40px;padding-bottom:80px;">
+
+      <!-- Page Header -->
+      <div class="page-hero animate-fade-up" style="text-align:left;padding:40px 0 48px;">
+        <div class="section-label">// we're here</div>
+        <h1 class="page-hero-title">Get in <span class="text-gradient">Touch</span></h1>
+        <p class="page-hero-subtitle">Have a question, idea, or just want to say hi? We'd love to hear from you.</p>
+      </div>
+
+      <!-- Contact Grid -->
+      <div class="contact-grid" style="margin-bottom:60px;">
+
+        <!-- Left: Info -->
+        <div>
+          <div class="contact-info-card animate-fade-up">
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.2rem;margin-bottom:28px;">Contact Information</h2>
+
+            <div class="contact-item">
+              <div class="contact-icon-box" style="background:rgba(124,58,237,0.15);">📧</div>
+              <div>
+                <div class="contact-item-label">Email</div>
+                <div class="contact-item-value">hello@cssc.edu</div>
+                <div class="contact-item-sub">We reply within 24 hours</div>
+              </div>
+            </div>
+
+            <div class="contact-item">
+              <div class="contact-icon-box" style="background:rgba(6,182,212,0.15);">📍</div>
+              <div>
+                <div class="contact-item-label">Location</div>
+                <div class="contact-item-value">Engineering Building, Room 204</div>
+                <div class="contact-item-sub">University Campus, Block E</div>
+              </div>
+            </div>
+
+            <div class="contact-item">
+              <div class="contact-icon-box" style="background:rgba(16,185,129,0.15);">🕐</div>
+              <div>
+                <div class="contact-item-label">Office Hours</div>
+                <div class="contact-item-value">Mon – Fri, 2:00 PM – 5:00 PM</div>
+                <div class="contact-item-sub">Or by appointment</div>
+              </div>
+            </div>
+
+            <div class="contact-item">
+              <div class="contact-icon-box" style="background:rgba(245,158,11,0.15);">💬</div>
+              <div>
+                <div class="contact-item-label">Discord</div>
+                <div class="contact-item-value">discord.gg/cssc</div>
+                <div class="contact-item-sub">Fastest way to reach us</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="section-label" style="margin-bottom:12px;">// follow us</div>
+            <div class="social-links-grid">
+              <div class="social-link-card" id="githubLink">⚡ GitHub</div>
+              <div class="social-link-card" id="discordLink">💬 Discord</div>
+              <div class="social-link-card" id="instagramLink">📸 Instagram</div>
+              <div class="social-link-card" id="linkedinLink">💼 LinkedIn</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Form -->
+        <div>
+          <div class="contact-form-card animate-fade-up stagger-2">
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.3rem;margin-bottom:8px;">Send a Message</h2>
+            <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:28px;">We'll get back to you as soon as possible.</p>
+
+            <div class="alert alert-success hidden" id="formSuccess">
+              <span>✓</span> <strong>Message sent!</strong> We'll reply within 24 hours. Thanks for reaching out!
+            </div>
+
+            <form id="contactForm" novalidate>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="contactName">Your Name</label>
+                  <input type="text" id="contactName" class="form-input" placeholder="Jane Doe" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="contactEmail">Email</label>
+                  <input type="email" id="contactEmail" class="form-input" placeholder="you@example.com" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Topic</label>
+                <div class="subject-tabs" id="topicTabs">
+                  <button type="button" class="subject-tab active" onclick="setTopic('General', this)">General</button>
+                  <button type="button" class="subject-tab" onclick="setTopic('Event Query', this)">Event Query</button>
+                  <button type="button" class="subject-tab" onclick="setTopic('Committee Interest', this)">Committee Interest</button>
+                  <button type="button" class="subject-tab" onclick="setTopic('Partnership', this)">Partnership</button>
+                  <button type="button" class="subject-tab" onclick="setTopic('Feedback', this)">Feedback</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="contactSubject">Subject</label>
+                <input type="text" id="contactSubject" class="form-input" placeholder="Brief description..." />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="contactMessage">Message</label>
+                <textarea
+                  id="contactMessage"
+                  class="form-input"
+                  rows="6"
+                  placeholder="Tell us more about what's on your mind..."
+                  maxlength="1000"
+                  oninput="updateCharCount()"
+                ></textarea>
+                <div class="char-count"><span id="charCount">0</span>/1000</div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block btn-lg" id="sendBtn">
+                Send Message →
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="scroll-reveal">
+        <div class="section-header" style="text-align:left;margin-bottom:28px;">
+          <div class="section-label">// common questions</div>
+          <h2 class="section-title" style="font-size:1.8rem;">FAQs</h2>
+        </div>
+
+        <div id="faqList">
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              How do I become a CSSC member?
+              <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">Simply register for a free account on our website! Membership is open to all students enrolled in CS-related programs. There's no fee to join the club.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              Are events open to non-CS students?
+              <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">Yes! While CSSC is primarily for CS students, most of our events welcome students from any faculty. Check individual event pages for specific eligibility requirements.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              How can I join the committee?
+              <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">Committee positions are opened at the start of each academic year. Watch for announcements on our website and Discord. You can also reach out via this contact form to express your interest early!</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              Can companies sponsor CSSC events?
+              <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">Absolutely! We welcome partnerships with companies for event sponsorship, recruitment talks, and workshops. Contact us with the Partnership topic above and our Sponsorship Head will be in touch.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              How do I suggest an event or workshop topic?
+              <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">We love hearing ideas from members! Use the contact form with the "Feedback" topic, or share your ideas in our Discord #suggestions channel. If we get enough interest, we'll organize it!</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Pre-fill if logged in
+    const user = Auth.getCurrentUser();
+    if (user) {
+      document.getElementById('contactName').value = user.name;
+      document.getElementById('contactEmail').value = user.email;
+    }
+
+    let selectedTopic = 'General';
+
+    function setTopic(topic, btn) {
+      selectedTopic = topic;
+      document.querySelectorAll('.subject-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function updateCharCount() {
+      document.getElementById('charCount').textContent = document.getElementById('contactMessage').value.length;
+    }
+
+    function toggleFAQ(el) {
+      const answer = el.nextElementSibling;
+      const isOpen = answer.classList.contains('open');
+      document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
+      document.querySelectorAll('.faq-question').forEach(q => q.classList.remove('active'));
+      if (!isOpen) {
+        answer.classList.add('open');
+        el.classList.add('active');
+      }
+    }
+
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('contactName').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const message = document.getElementById('contactMessage').value.trim();
+      const btn = document.getElementById('sendBtn');
+
+      if (!name || !email || !message) {
+        Toast.show('Please fill in all required fields.', 'error');
+        return;
+      }
+
+      btn.innerHTML = '<div class="spinner"></div> Sending...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        document.getElementById('formSuccess').classList.remove('hidden');
+        document.getElementById('contactForm').reset();
+        document.getElementById('charCount').textContent = '0';
+        if (user) {
+          document.getElementById('contactName').value = user.name;
+          document.getElementById('contactEmail').value = user.email;
+        }
+        btn.innerHTML = 'Send Message →';
+        btn.disabled = false;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 1000);
+    });
+  </script>
+
+  <script>buildFooter();</script>
+</body>
+</html>

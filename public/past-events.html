@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Past Events — CSSC</title>
+  <meta name="description" content="Browse highlights, photos, and recaps from past CSSC events." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .past-event-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-lg);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .past-event-card:hover {
+      border-color: rgba(124,58,237,0.3);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    .past-event-header {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .past-event-header .big-icon {
+      font-size: 5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .past-event-header .overlay-gradient {
+      position: absolute;
+      inset: 0;
+    }
+
+    .past-event-body {
+      padding: 24px;
+    }
+
+    .past-event-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .past-event-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .past-event-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .past-event-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .attendee-count-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    /* Highlight banner */
+    .highlight-banner {
+      background: var(--gradient-card);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: var(--border-radius-xl);
+      padding: 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 60px;
+      text-align: center;
+    }
+
+    .highlight-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .highlight-lbl {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    /* Year filter */
+    .year-filter {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .year-btn {
+      padding: 8px 20px;
+      border-radius: 100px;
+      border: 1px solid var(--glass-border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .year-btn:hover, .year-btn.active {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .highlight-banner { grid-template-columns: 1fr 1fr; gap: 16px; padding: 32px 24px; }
+    }
+
+    @media (max-width: 480px) {
+      .highlight-banner { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <script src="shared.js"></script>
+  <script>
+    Auth.requireAuth();
+    buildNav('about');
+  </script>
+
+  <div class="page-wrapper">
+    <div class="container" style="padding-top:40px;padding-bottom:80px;">
+
+      <!-- Header -->
+      <div class="page-hero animate-fade-up" style="text-align:left;padding:40px 0 48px;">
+        <div class="section-label">// memories & milestones</div>
+        <h1 class="page-hero-title">Past <span class="text-gradient">Events</span></h1>
+        <p class="page-hero-subtitle">Relive the highlights from our events, workshops, hackathons, and gatherings over the years.</p>
+      </div>
+
+      <!-- Highlight Banner -->
+      <div class="highlight-banner animate-fade-up stagger-2 scroll-reveal">
+        <div>
+          <div class="highlight-num">2</div>
+          <div class="highlight-lbl">Major Hackathons</div>
+        </div>
+        <div>
+          <div class="highlight-num">8+</div>
+          <div class="highlight-lbl">Workshops Run</div>
+        </div>
+        <div>
+          <div class="highlight-num">300+</div>
+          <div class="highlight-lbl">Total Attendees</div>
+        </div>
+        <div>
+          <div class="highlight-num">$5K</div>
+          <div class="highlight-lbl">Prizes Awarded</div>
+        </div>
+      </div>
+
+      <!-- Year Filter -->
+      <div class="year-filter">
+        <button class="year-btn active" onclick="filterYear('all', this)" id="yearAll">All Years</button>
+        <button class="year-btn" onclick="filterYear('2025', this)">2025</button>
+        <button class="year-btn" onclick="filterYear('2024', this)">2024</button>
+        <button class="year-btn" onclick="filterYear('2023', this)">2023</button>
+      </div>
+
+      <!-- Past Events Grid -->
+      <div id="pastEventsGrid" class="grid-auto">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- Placeholder Past Event Records (static) -->
+      <div id="staticPastEvents" style="display:none;">
+        <div data-year="2024" data-title="Hackathon 2024" data-cat="Competition" data-date="2024-10-12"
+             data-location="Engineering Block, Hall A" data-attendees="120"
+             data-desc="Our biggest hackathon yet! 120 participants over 24 hours built solutions in sustainability tech, healthcare AI, and smart city innovations. First prize: $2,000." />
+        <div data-year="2024" data-title="Python for ML Bootcamp" data-cat="Workshop" data-date="2024-09-05"
+             data-location="CS Lab A" data-attendees="45"
+             data-desc="A 2-day intensive bootcamp covering NumPy, Pandas, scikit-learn, and building your first neural network from scratch." />
+        <div data-year="2024" data-title="Industry Talk: Life at Google" data-cat="Talk" data-date="2024-08-20"
+             data-location="Auditorium B" data-attendees="200"
+             data-desc="Software engineers from Google Singapore shared their career journeys, interview tips, and what it's really like to work at a tech giant." />
+        <div data-year="2025" data-title="Web Dev Bootcamp" data-cat="Workshop" data-date="2025-04-10"
+             data-location="CS Lab A, Block B" data-attendees="80"
+             data-desc="A 2-day intensive bootcamp covering HTML, CSS, JavaScript, and React fundamentals. Over 80 students participated and built their first portfolio websites." />
+        <div data-year="2025" data-title="Annual Dinner & Awards Night" data-cat="Social" data-date="2025-05-28"
+             data-location="Grand Ballroom" data-attendees="120"
+             data-desc="Celebrating another year of achievement! Our top contributors, hackathon winners, and outstanding members were recognized with awards and prizes." />
+        <div data-year="2023" data-title="Cybersecurity Workshop Series" data-cat="Workshop" data-date="2023-11-15"
+             data-location="CS Lab B" data-attendees="60"
+             data-desc="3-week series covering ethical hacking, CTF challenges, network security basics, and practical penetration testing techniques." />
+        <div data-year="2023" data-title="CSSC LAN Party 2023" data-cat="Social" data-date="2023-12-02"
+             data-location="Gaming Lounge, Student Union" data-attendees="80"
+             data-desc="An epic all-night LAN party with CS:GO, Valorant, and indie game showcases. Also featured a game-jam where teams built mini games in 3 hours." />
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const gradients = [
+      'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(6,182,212,0.2))',
+      'linear-gradient(135deg, rgba(6,182,212,0.3), rgba(16,185,129,0.2))',
+      'linear-gradient(135deg, rgba(245,158,11,0.3), rgba(236,72,153,0.2))',
+      'linear-gradient(135deg, rgba(16,185,129,0.3), rgba(6,182,212,0.2))',
+      'linear-gradient(135deg, rgba(236,72,153,0.3), rgba(124,58,237,0.2))',
+    ];
+
+    function getCategoryIcon(cat) {
+      const icons = { 'Competition': '🏆', 'Workshop': '🛠', 'Talk': '🎤', 'Study Group': '📖', 'Social': '🎉' };
+      return icons[cat] || '📅';
+    }
+
+    let allEvents = [];
+
+    function loadPastEvents() {
+      // From localStorage
+      const storedPast = Events.getAll().filter(e => e.isPast);
+
+      // From static HTML
+      const staticItems = document.querySelectorAll('#staticPastEvents > div');
+      const staticEvts = Array.from(staticItems).map((el, i) => ({
+        id: 'static-' + i,
+        title: el.dataset.title,
+        category: el.dataset.cat,
+        date: el.dataset.date,
+        location: el.dataset.location,
+        attendees: Array(parseInt(el.dataset.attendees) || 0).fill(''),
+        description: el.dataset.desc,
+        year: el.dataset.year,
+        isPast: true
+      }));
+
+      allEvents = [...storedPast, ...staticEvts];
+      renderPastEvents(allEvents);
+    }
+
+    function renderPastEvents(events) {
+      const grid = document.getElementById('pastEventsGrid');
+
+      if (events.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column:1/-1;text-align:center;padding:80px;color:var(--text-muted);">
+            <div style="font-size:3rem;margin-bottom:16px;">📭</div>
+            <div>No past events found for this year.</div>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = events.map((ev, i) => {
+        const grad = gradients[i % gradients.length];
+        const attended = Array.isArray(ev.attendees) ? ev.attendees.length : 0;
+        return `
+          <div class="past-event-card scroll-reveal" style="animation-delay:${(i % 3) * 0.1}s;">
+            <div class="past-event-header" style="background:${grad};">
+              <div class="overlay-gradient" style="background:radial-gradient(circle at 25% 25%, rgba(124,58,237,0.2), transparent 60%);"></div>
+              <div class="big-icon">${getCategoryIcon(ev.category)}</div>
+              <div style="position:absolute;top:12px;left:12px;"><span class="badge badge-green">✓ Completed</span></div>
+              <div style="position:absolute;top:12px;right:12px;background:rgba(8,8,16,0.8);border:1px solid var(--glass-border);border-radius:6px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--cyan-light);">
+                ${formatDate(ev.date)}
+              </div>
+            </div>
+            <div class="past-event-body">
+              <div style="margin-bottom:8px;"><span class="badge ${getCategoryBadgeClass(ev.category)}">${ev.category}</span></div>
+              <h3 class="past-event-title">${ev.title}</h3>
+              <div class="past-event-meta">
+                <span>📍 ${ev.location}</span>
+              </div>
+              <p class="past-event-desc">${ev.description}</p>
+              <div class="past-event-footer">
+                <div class="attendee-count-badge">
+                  <span>👥</span>
+                  <span>${attended} attended</span>
+                </div>
+                <a href="event-detail.html?id=${ev.id}" class="btn btn-secondary btn-sm">View Details</a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      initScrollAnimations();
+    }
+
+    function filterYear(year, btn) {
+      document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (year === 'all') {
+        renderPastEvents(allEvents);
+      } else {
+        const filtered = allEvents.filter(ev => ev.date.startsWith(year) || ev.year === year);
+        renderPastEvents(filtered);
+      }
+    }
+
+    loadPastEvents();
+  </script>
+
+  <script>buildFooter();</script>
+</body>
+</html>

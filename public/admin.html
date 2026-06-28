@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — CSSC</title>
+  <meta name="description" content="CSSC Admin Dashboard — manage members, events, and club settings." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 0;
+      min-height: calc(100vh - var(--nav-height));
+    }
+
+    .admin-sidebar {
+      background: rgba(10,10,20,0.95);
+      border-right: 1px solid var(--glass-border);
+      padding: 24px 0;
+      position: sticky;
+      top: var(--nav-height);
+      height: calc(100vh - var(--nav-height));
+      overflow-y: auto;
+    }
+
+    .admin-sidebar-header {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: 12px;
+    }
+
+    .admin-sidebar-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 20px;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-nav-item:hover {
+      color: var(--text-primary);
+      background: var(--glass);
+    }
+
+    .sidebar-nav-item.active {
+      color: var(--purple-light);
+      background: rgba(124,58,237,0.08);
+      border-left-color: var(--purple);
+    }
+
+    .sidebar-nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    .admin-content {
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+
+    /* Stats cards */
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .admin-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius);
+      padding: 20px;
+    }
+
+    .admin-stat-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .admin-stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .admin-stat-trend {
+      font-size: 0.75rem;
+      margin-top: 8px;
+    }
+
+    /* Table */
+    .admin-table-wrap {
+      overflow-x: auto;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .admin-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--glass-border);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .admin-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+
+    .admin-table tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .admin-table tr:last-child td { border-bottom: none; }
+
+    /* Event Form */
+    .event-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .event-form-full { grid-column: 1 / -1; }
+
+    .section-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-title-bar h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1024px) {
+      .admin-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .admin-layout { grid-template-columns: 1fr; }
+      .admin-sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--glass-border); padding: 16px 0; }
+      .admin-sidebar-title { display: none; }
+      .admin-sidebar-nav { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px; }
+      .sidebar-nav-item { border-left: none; border-radius: var(--border-radius-sm); padding: 8px 14px; }
+      .sidebar-nav-item.active { border-left: none; }
+      .admin-content { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <script src="shared.js"></script>
+  <script>
+    // Admin guard
+    if (!Auth.isLoggedIn() || !Auth.isAdmin()) {
+      window.location.href = Auth.isLoggedIn() ? 'home.html' : 'login.html';
+    }
+    buildNav('admin');
+  </script>
+
+  <div class="page-wrapper" style="padding-bottom:0;">
+    <div class="admin-layout">
+
+      <!-- Sidebar -->
+      <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+          <div class="admin-sidebar-title">Admin Panel</div>
+        </div>
+        <div class="admin-sidebar-nav">
+          <div class="sidebar-nav-item active" onclick="showSection('dashboard', this)" id="navDashboard">
+            <span class="sidebar-nav-icon">📊</span> Dashboard
+          </div>
+          <div class="sidebar-nav-item" onclick="showSection('events', this)" id="navEvents">
+            <span class="sidebar-nav-icon">🗓</span> Manage Events
+          </div>
+          <div class="sidebar-nav-item" onclick="showSection('members', this)" id="navMembers">
+            <span class="sidebar-nav-icon">👥</span> Members
+          </div>
+          <div class="sidebar-nav-item" onclick="showSection('addEvent', this)" id="navAddEvent">
+            <span class="sidebar-nav-icon">➕</span> Add Event
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="admin-content">
+
+        <!-- ── Dashboard ── -->
+        <div class="admin-section active" id="section-dashboard">
+          <div style="margin-bottom:24px;">
+            <div class="section-label">// admin dashboard</div>
+            <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;margin-top:6px;">Control Panel</h1>
+          </div>
+
+          <div class="admin-stats" id="adminStats">
+            <div class="admin-stat">
+              <div class="admin-stat-value" id="statTotalMembers">—</div>
+              <div class="admin-stat-label">Total Members</div>
+              <div class="admin-stat-trend text-green">↑ All time</div>
+            </div>
+            <div class="admin-stat">
+              <div class="admin-stat-value" id="statTotalEvents">—</div>
+              <div class="admin-stat-label">Total Events</div>
+              <div class="admin-stat-trend text-cyan">Upcoming + Past</div>
+            </div>
+            <div class="admin-stat">
+              <div class="admin-stat-value" id="statUpcomingEvents">—</div>
+              <div class="admin-stat-label">Upcoming Events</div>
+              <div class="admin-stat-trend text-green">Active</div>
+            </div>
+            <div class="admin-stat">
+              <div class="admin-stat-value" id="statTotalRegistrations">—</div>
+              <div class="admin-stat-label">Total Registrations</div>
+              <div class="admin-stat-trend text-purple">Across all events</div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card-glass" style="padding:28px;">
+            <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;margin-bottom:20px;">Recent Events</h3>
+            <div class="admin-table-wrap">
+              <table class="admin-table" id="dashboardEventsTable">
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Registrations</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardEventsBody">
+                  <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:32px;">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Manage Events ── -->
+        <div class="admin-section" id="section-events">
+          <div class="section-title-bar">
+            <div>
+              <div class="section-label">// events management</div>
+              <h2>All Events</h2>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="showSection('addEvent', document.getElementById('navAddEvent'))" id="addEventQuickBtn">➕ Add Event</button>
+          </div>
+
+          <div class="card-glass" style="padding:24px;">
+            <div class="admin-table-wrap">
+              <table class="admin-table" id="eventsTable">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Attendees</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="eventsTableBody">
+                  <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px;">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Members ── -->
+        <div class="admin-section" id="section-members">
+          <div class="section-title-bar">
+            <div>
+              <div class="section-label">// member management</div>
+              <h2>All Members</h2>
+            </div>
+            <div style="font-size:0.85rem;color:var(--text-muted);" id="memberCount"></div>
+          </div>
+
+          <!-- Search -->
+          <div style="margin-bottom:20px;position:relative;max-width:340px;">
+            <input type="text" id="memberSearch" class="form-input" placeholder="🔍 Search members..." oninput="renderMembersTable()" />
+          </div>
+
+          <div class="card-glass" style="padding:24px;">
+            <div class="admin-table-wrap">
+              <table class="admin-table" id="membersTable">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th>Events</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="membersTableBody">
+                  <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Add Event ── -->
+        <div class="admin-section" id="section-addEvent">
+          <div class="section-label">// create new event</div>
+          <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:24px;">Add New Event</h2>
+
+          <div class="alert alert-success hidden" id="addEventSuccess">
+            <span>✓</span> Event created successfully! <a href="events.html" style="color:inherit;text-decoration:underline;">View in Event Hub</a>
+          </div>
+
+          <div class="card-glass" style="padding:32px;">
+            <form id="addEventForm" novalidate>
+              <div class="event-form-grid">
+                <div class="form-group event-form-full">
+                  <label class="form-label" for="evTitle">Event Title *</label>
+                  <input type="text" id="evTitle" class="form-input" placeholder="e.g. Hackathon 2025: Build the Future" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="evCategory">Category *</label>
+                  <select id="evCategory" class="form-input" required>
+                    <option value="">Select category...</option>
+                    <option value="Competition">Competition</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Talk">Talk</option>
+                    <option value="Study Group">Study Group</option>
+                    <option value="Social">Social</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="evDate">Event Date *</label>
+                  <input type="date" id="evDate" class="form-input" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="evTime">Start Time *</label>
+                  <input type="time" id="evTime" class="form-input" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="evCapacity">Capacity (max attendees)</label>
+                  <input type="number" id="evCapacity" class="form-input" placeholder="Leave blank for unlimited" min="1" />
+                </div>
+                <div class="form-group event-form-full">
+                  <label class="form-label" for="evLocation">Location *</label>
+                  <input type="text" id="evLocation" class="form-input" placeholder="e.g. Engineering Building, Room 301" required />
+                </div>
+                <div class="form-group event-form-full">
+                  <label class="form-label" for="evDesc">Description *</label>
+                  <textarea id="evDesc" class="form-input" rows="5" placeholder="Describe the event — what will attendees do, learn, or experience?" required></textarea>
+                </div>
+                <div class="form-group event-form-full">
+                  <label class="form-label" for="evTags">Tags (comma-separated)</label>
+                  <input type="text" id="evTags" class="form-input" placeholder="e.g. hackathon, competition, coding" />
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                  <input type="checkbox" id="evIsPast" style="accent-color:var(--purple);width:16px;height:16px;cursor:pointer;" />
+                  <label for="evIsPast" style="font-size:0.875rem;color:var(--text-secondary);cursor:pointer;">Mark as past event</label>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;margin-top:8px;">
+                <button type="submit" class="btn btn-primary btn-lg" id="createEventBtn">Create Event →</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('addEventForm').reset()">Reset</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function showSection(id, el) {
+      document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.sidebar-nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById('section-' + id).classList.add('active');
+      el.classList.add('active');
+
+      if (id === 'dashboard') renderDashboard();
+      if (id === 'events') renderEventsTable();
+      if (id === 'members') renderMembersTable();
+    }
+
+    // ── Dashboard ──
+    function renderDashboard() {
+      const allUsers = Users.getAll();
+      const allEvts = Events.getAll();
+      const upcoming = allEvts.filter(e => !e.isPast);
+      const totalReg = allEvts.reduce((sum, e) => sum + (e.attendees || []).length, 0);
+
+      document.getElementById('statTotalMembers').textContent = allUsers.length;
+      document.getElementById('statTotalEvents').textContent = allEvts.length;
+      document.getElementById('statUpcomingEvents').textContent = upcoming.length;
+      document.getElementById('statTotalRegistrations').textContent = totalReg;
+
+      const tbody = document.getElementById('dashboardEventsBody');
+      tbody.innerHTML = allEvts.slice(0, 8).map(ev => `
+        <tr>
+          <td style="font-weight:500;">${ev.title}</td>
+          <td><span class="badge ${getCategoryBadgeClass(ev.category)}">${ev.category}</span></td>
+          <td style="color:var(--text-secondary);">${formatDate(ev.date)}</td>
+          <td>${(ev.attendees || []).length}${ev.capacity ? '/' + ev.capacity : ''}</td>
+          <td><span class="badge ${ev.isPast ? 'badge-green' : 'badge-cyan'}">${ev.isPast ? 'Past' : 'Upcoming'}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // ── Events Table ──
+    function renderEventsTable() {
+      const tbody = document.getElementById('eventsTableBody');
+      const evts = Events.getAll();
+      tbody.innerHTML = evts.map(ev => `
+        <tr>
+          <td style="max-width:200px;"><div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ev.title}</div></td>
+          <td><span class="badge ${getCategoryBadgeClass(ev.category)}">${ev.category}</span></td>
+          <td style="color:var(--text-secondary);white-space:nowrap;">${formatDate(ev.date)}</td>
+          <td style="max-width:160px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ev.location}</td>
+          <td>${(ev.attendees || []).length}${ev.capacity ? '/' + ev.capacity : ''}</td>
+          <td><span class="badge ${ev.isPast ? 'badge-green' : 'badge-cyan'}">${ev.isPast ? 'Past' : 'Upcoming'}</span></td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <a href="event-detail.html?id=${ev.id}" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:5px 10px;">View</a>
+              <button class="btn btn-danger btn-sm" style="font-size:0.75rem;padding:5px 10px;" onclick="deleteEvent('${ev.id}')">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ── Members Table ──
+    function renderMembersTable() {
+      const query = (document.getElementById('memberSearch')?.value || '').toLowerCase();
+      const users = Users.getAll().filter(u =>
+        !query || u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)
+      );
+      document.getElementById('memberCount').textContent = users.length + ' members';
+      const tbody = document.getElementById('membersTableBody');
+      tbody.innerHTML = users.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">No members found</td></tr>' :
+        users.map(u => `
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;flex-shrink:0;">${(u.name||'?')[0].toUpperCase()}</div>
+                <div style="font-weight:500;">${u.name}</div>
+              </div>
+            </td>
+            <td style="color:var(--text-secondary);font-size:0.82rem;">${u.email}</td>
+            <td><span class="badge ${u.role === 'admin' ? 'badge-orange' : 'badge-purple'}">${u.role === 'admin' ? '⚙ Admin' : 'Member'}</span></td>
+            <td style="color:var(--text-muted);font-size:0.82rem;">${formatDate(u.joinedDate)}</td>
+            <td>${(u.joinedActivities || []).length}</td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                ${u.role !== 'admin' ? `<button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:5px 10px;" onclick="promoteAdmin('${u.email}')">Make Admin</button>` : ''}
+                ${u.email !== Auth.getCurrentUser().email ? `<button class="btn btn-danger btn-sm" style="font-size:0.75rem;padding:5px 10px;" onclick="deleteUser('${u.email}')">Remove</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `).join('');
+    }
+
+    function deleteEvent(id) {
+      if (confirm('Are you sure you want to delete this event? This cannot be undone.')) {
+        Events.delete(id);
+        Toast.show('Event deleted.', 'info');
+        renderEventsTable();
+        renderDashboard();
+      }
+    }
+
+    function deleteUser(email) {
+      if (confirm(`Remove member ${email}? This cannot be undone.`)) {
+        const users = Users.getAll().filter(u => u.email.toLowerCase() !== email.toLowerCase());
+        Users.save(users);
+        Toast.show('Member removed.', 'info');
+        renderMembersTable();
+      }
+    }
+
+    function promoteAdmin(email) {
+      if (confirm(`Promote ${email} to Admin role?`)) {
+        Users.update(email, { role: 'admin' });
+        Toast.show('User promoted to admin.', 'success');
+        renderMembersTable();
+      }
+    }
+
+    // ── Add Event Form ──
+    document.getElementById('addEventForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const title = document.getElementById('evTitle').value.trim();
+      const category = document.getElementById('evCategory').value;
+      const date = document.getElementById('evDate').value;
+      const time = document.getElementById('evTime').value;
+      const location = document.getElementById('evLocation').value.trim();
+      const desc = document.getElementById('evDesc').value.trim();
+      const capacity = parseInt(document.getElementById('evCapacity').value) || null;
+      const tags = document.getElementById('evTags').value.split(',').map(t => t.trim()).filter(Boolean);
+      const isPast = document.getElementById('evIsPast').checked;
+      const btn = document.getElementById('createEventBtn');
+
+      if (!title || !category || !date || !time || !location || !desc) {
+        Toast.show('Please fill in all required fields.', 'error');
+        return;
+      }
+
+      btn.innerHTML = '<div class="spinner"></div> Creating...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        const newEvent = {
+          id: 'evt-' + generateId(),
+          title, category, date, time, location,
+          description: desc,
+          capacity, tags,
+          attendees: [],
+          status: isPast ? 'completed' : 'upcoming',
+          isPast
+        };
+        Events.add(newEvent);
+        document.getElementById('addEventSuccess').classList.remove('hidden');
+        document.getElementById('addEventForm').reset();
+        btn.innerHTML = 'Create Event →';
+        btn.disabled = false;
+        Toast.show('Event "' + title + '" created!', 'success');
+      }, 700);
+    });
+
+    // Initial render
+    renderDashboard();
+  </script>
+</body>
+</html>

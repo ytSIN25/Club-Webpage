@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — CSSC</title>
+  <meta name="description" content="Your CSSC Dashboard — explore upcoming events, news, and club activities." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .dashboard-hero {
+      padding: 60px 0 40px;
+      position: relative;
+    }
+
+    .welcome-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .welcome-sub {
+      color: var(--text-secondary);
+      margin-top: 10px;
+      font-size: 1.05rem;
+    }
+
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin: 40px 0;
+    }
+
+    .quick-link {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius);
+      padding: 24px 20px;
+      text-align: center;
+      transition: var(--transition);
+      display: block;
+    }
+
+    .quick-link:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--purple);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(124,58,237,0.2);
+    }
+
+    .quick-link-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .quick-link-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .quick-link-sub {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      margin-top: 4px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-bottom: 60px;
+    }
+
+    .event-preview-card {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-sm);
+      transition: var(--transition);
+      margin-bottom: 12px;
+    }
+
+    .event-preview-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(124,58,237,0.25);
+    }
+
+    .event-preview-date {
+      min-width: 56px;
+      text-align: center;
+      background: rgba(124,58,237,0.1);
+      border-radius: 10px;
+      padding: 8px;
+      border: 1px solid rgba(124,58,237,0.2);
+    }
+
+    .event-preview-date .day {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--purple-light);
+      line-height: 1;
+    }
+
+    .event-preview-date .month {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .event-preview-info { flex: 1; }
+    .event-preview-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .event-preview-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .announcements-card {
+      position: relative;
+    }
+
+    .announcement-item {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .announcement-item:last-child { border-bottom: none; }
+
+    .announcement-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .announcement-text {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-sm);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-card .value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-card .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .quick-links { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .quick-links { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <script src="shared.js"></script>
+  <script>
+    Auth.requireAuth();
+    buildNav('home');
+  </script>
+
+  <div class="page-wrapper">
+    <div class="container">
+
+      <!-- Hero -->
+      <div class="dashboard-hero">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+          <div>
+            <div class="section-label">// welcome back</div>
+            <h1 class="welcome-text">Hello, <span class="text-gradient" id="userName">Member</span> 👋</h1>
+            <p class="welcome-sub">Here's what's happening in CSSC today.</p>
+          </div>
+          <a href="account.html" class="btn btn-secondary" id="myProfileBtn">
+            <span>👤</span> My Profile
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="quick-links">
+        <a href="events.html" class="quick-link" id="qlEvents">
+          <div class="quick-link-icon">🗓️</div>
+          <div class="quick-link-label">Event Hub</div>
+          <div class="quick-link-sub">Browse & join events</div>
+        </a>
+        <a href="committee.html" class="quick-link" id="qlCommittee">
+          <div class="quick-link-icon">🏛️</div>
+          <div class="quick-link-label">Committee</div>
+          <div class="quick-link-sub">Meet the team</div>
+        </a>
+        <a href="about.html" class="quick-link" id="qlAbout">
+          <div class="quick-link-icon">ℹ️</div>
+          <div class="quick-link-label">About</div>
+          <div class="quick-link-sub">Our story & mission</div>
+        </a>
+        <a href="past-events.html" class="quick-link" id="qlPastEvents">
+          <div class="quick-link-icon">📸</div>
+          <div class="quick-link-label">Past Events</div>
+          <div class="quick-link-sub">Gallery & highlights</div>
+        </a>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="main-grid">
+
+        <!-- Left: Upcoming Events -->
+        <div>
+          <div class="card-glass" style="padding:28px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+              <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.2rem;font-weight:700;">🔥 Upcoming Events</h2>
+              <a href="events.html" class="btn btn-secondary btn-sm" id="viewAllEventsBtn">View All</a>
+            </div>
+            <div id="upcomingEventsList">
+              <div style="text-align:center;padding:40px;color:var(--text-muted);">Loading events...</div>
+            </div>
+          </div>
+
+          <!-- Stats Row -->
+          <div class="stats-row mt-24">
+            <div class="stat-card">
+              <div class="value" id="statMembers">500+</div>
+              <div class="label">Members</div>
+            </div>
+            <div class="stat-card">
+              <div class="value" id="statEvents">40+</div>
+              <div class="label">Events/Year</div>
+            </div>
+            <div class="stat-card">
+              <div class="value" id="statJoined">0</div>
+              <div class="label">Events Joined</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Sidebar -->
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+          <!-- My Activity -->
+          <div class="card-glass" style="padding:24px;">
+            <h3 style="font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;margin-bottom:16px;">My Activity</h3>
+            <div id="myActivityPanel">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.9rem;">
+                You haven't joined any events yet.<br/>
+                <a href="events.html" style="color:var(--purple-light);margin-top:8px;display:inline-block;">Browse Events →</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Announcements -->
+          <div class="card-glass" style="padding:24px;">
+            <h3 style="font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;margin-bottom:16px;">📢 Announcements</h3>
+            <div class="announcement-item">
+              <div class="announcement-tag" style="background:rgba(16,185,129,0.15);color:#34d399;">NEW</div>
+              <div class="announcement-text">Hackathon 2025 registrations are now open! Form your team and sign up by August 31.</div>
+            </div>
+            <div class="announcement-item">
+              <div class="announcement-tag" style="background:rgba(6,182,212,0.15);color:var(--cyan-light);">INFO</div>
+              <div class="announcement-text">Weekly algorithm study group every Friday 4–6 PM in Discussion Room 2.</div>
+            </div>
+            <div class="announcement-item">
+              <div class="announcement-tag" style="background:rgba(245,158,11,0.15);color:#fbbf24;">EVENT</div>
+              <div class="announcement-text">Tech Talk on Cybersecurity Careers coming up July 10! Register your seat now.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const user = Auth.getCurrentUser();
+    document.getElementById('userName').textContent = user.firstName || user.name.split(' ')[0];
+
+    // Upcoming events
+    const allEvents = Events.getAll().filter(e => !e.isPast);
+    const upcoming = allEvents.slice(0, 4);
+    const list = document.getElementById('upcomingEventsList');
+
+    if (upcoming.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">No upcoming events at the moment.</div>';
+    } else {
+      list.innerHTML = upcoming.map(ev => {
+        const d = new Date(ev.date);
+        const day = d.getDate();
+        const month = d.toLocaleString('en', { month: 'short' });
+        return `
+          <a href="event-detail.html?id=${ev.id}" class="event-preview-card" style="text-decoration:none;color:inherit;">
+            <div class="event-preview-date">
+              <div class="day">${day}</div>
+              <div class="month">${month}</div>
+            </div>
+            <div class="event-preview-info">
+              <div class="event-preview-title">${ev.title}</div>
+              <div class="event-preview-meta">${formatTime(ev.time)} · ${ev.location}</div>
+              <div class="mt-8"><span class="badge ${getCategoryBadgeClass(ev.category)}">${ev.category}</span></div>
+            </div>
+            <div style="color:var(--text-muted);font-size:0.75rem;white-space:nowrap;">${daysUntil(ev.date)}</div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    // User activity
+    const joined = user.joinedActivities || [];
+    document.getElementById('statJoined').textContent = joined.length;
+
+    if (joined.length > 0) {
+      const myEvts = joined.slice(0, 3).map(id => Events.get(id)).filter(Boolean);
+      document.getElementById('myActivityPanel').innerHTML = myEvts.map(ev => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--glass-border);">
+          <span style="font-size:1.1rem;">${ev.isPast ? '✅' : '🔵'}</span>
+          <div>
+            <div style="font-size:0.85rem;font-weight:500;">${ev.title}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">${formatDate(ev.date)}</div>
+          </div>
+        </div>
+      `).join('') + (joined.length > 3 ? `<a href="account.html" style="font-size:0.82rem;color:var(--purple-light);display:block;margin-top:10px;">+${joined.length - 3} more →</a>` : '');
+    }
+  </script>
+
+  <script>buildFooter();</script>
+</body>
+</html>

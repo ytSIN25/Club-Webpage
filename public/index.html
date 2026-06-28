@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSSC — Computer Science Student Club</title>
+  <meta name="description" content="Join CSSC — the premier Computer Science Student Club. Build, learn, and grow with a community of passionate tech enthusiasts." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Landing page specific */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: var(--gradient-hero);
+      z-index: 0;
+    }
+
+    .hero-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.25;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 0%, var(--bg-primary) 80%);
+      z-index: 1;
+    }
+
+    .hero-orb-1 {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      top: -100px;
+      left: -100px;
+      background: radial-gradient(circle, rgba(124,58,237,0.3), transparent 70%);
+      z-index: 1;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .hero-orb-2 {
+      position: absolute;
+      width: 350px;
+      height: 350px;
+      bottom: -50px;
+      right: -80px;
+      background: radial-gradient(circle, rgba(6,182,212,0.25), transparent 70%);
+      z-index: 1;
+      animation: float 8s ease-in-out infinite reverse;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+      padding: 0 2rem;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--purple-light);
+      letter-spacing: 1px;
+      margin-bottom: 28px;
+      animation: fadeInUp 0.6s ease;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.6s ease 0.1s both;
+    }
+
+    .hero-title .line-2 {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--text-secondary);
+      max-width: 580px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+      animation: fadeInUp 0.6s ease 0.2s both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.6s ease 0.3s both;
+    }
+
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin-top: 80px;
+      animation: fadeInUp 0.6s ease 0.4s both;
+    }
+
+    .stat-item { text-align: center; }
+    .stat-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px; }
+
+    /* Features */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      padding: 32px;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-lg);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(124,58,237,0.3);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      margin-bottom: 20px;
+    }
+
+    .feature-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .feature-desc {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    /* CTA section */
+    .cta-section {
+      text-align: center;
+      padding: 100px 0;
+      position: relative;
+    }
+
+    .cta-card {
+      background: var(--gradient-card);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: var(--border-radius-xl);
+      padding: 80px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center top, rgba(124,58,237,0.15), transparent 70%);
+    }
+
+    .cta-content { position: relative; z-index: 1; }
+
+    @media (max-width: 768px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <script src="shared.js"></script>
+
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <img src="/Users/peterpui/.gemini/antigravity-ide/brain/9c143bc9-d037-433c-a175-78496dd5b339/hero_bg_1782611206329.png" alt="Hero background" />
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-orb-1"></div>
+    <div class="hero-orb-2"></div>
+
+    <div class="hero-content">
+      <div class="hero-badge">✦ NOW ACCEPTING NEW MEMBERS</div>
+      <h1 class="hero-title">
+        Where Code<br/>
+        <span class="line-2">Meets Community</span>
+      </h1>
+      <p class="hero-desc">
+        Join CSSC — a vibrant community of computer science students passionate about technology,
+        innovation, and building the future together.
+      </p>
+      <div class="hero-actions">
+        <a href="register.html" class="btn btn-primary btn-xl" id="heroJoinBtn">
+          Join the Club →
+        </a>
+        <a href="login.html" class="btn btn-secondary btn-xl" id="heroLoginBtn">
+          Sign In
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-number">500+</div>
+          <div class="stat-label">Members</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">40+</div>
+          <div class="stat-label">Events/Year</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">12</div>
+          <div class="stat-label">Committee</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">5</div>
+          <div class="stat-label">Years Strong</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" style="position:relative;z-index:1;">
+    <div class="container">
+      <div class="section-header scroll-reveal">
+        <div class="section-label">// what we offer</div>
+        <h2 class="section-title">Built for <span class="gradient-text">CS Students</span></h2>
+        <p class="section-subtitle">Everything you need to grow as a developer, network with peers, and launch your tech career.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card scroll-reveal stagger-1">
+          <div class="feature-icon" style="background:rgba(124,58,237,0.15);">🚀</div>
+          <h3 class="feature-title">Hackathons & Competitions</h3>
+          <p class="feature-desc">Compete in 24-hour hackathons, coding contests, and CTF challenges. Win prizes and build your portfolio.</p>
+        </div>
+        <div class="feature-card scroll-reveal stagger-2">
+          <div class="feature-icon" style="background:rgba(6,182,212,0.15);">🎓</div>
+          <h3 class="feature-title">Workshops & Bootcamps</h3>
+          <p class="feature-desc">Hands-on sessions on cutting-edge tech — from AI/ML to web dev, cloud computing, and cybersecurity.</p>
+        </div>
+        <div class="feature-card scroll-reveal stagger-3">
+          <div class="feature-icon" style="background:rgba(16,185,129,0.15);">🤝</div>
+          <h3 class="feature-title">Industry Networking</h3>
+          <p class="feature-desc">Connect with professionals, alumni, and companies. Get mentorship and internship opportunities.</p>
+        </div>
+        <div class="feature-card scroll-reveal stagger-1">
+          <div class="feature-icon" style="background:rgba(245,158,11,0.15);">💡</div>
+          <h3 class="feature-title">Project Collaborations</h3>
+          <p class="feature-desc">Work on real-world projects with like-minded peers. Build things that matter and make an impact.</p>
+        </div>
+        <div class="feature-card scroll-reveal stagger-2">
+          <div class="feature-icon" style="background:rgba(236,72,153,0.15);">📚</div>
+          <h3 class="feature-title">Study Groups</h3>
+          <p class="feature-desc">Weekly algorithm study groups and peer learning sessions. Ace your exams and technical interviews.</p>
+        </div>
+        <div class="feature-card scroll-reveal stagger-3">
+          <div class="feature-icon" style="background:rgba(124,58,237,0.15);">🎉</div>
+          <h3 class="feature-title">Social Events</h3>
+          <p class="feature-desc">Annual dinners, game nights, LAN parties, and more. Find your people and make memories.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section" style="position:relative;z-index:1;">
+    <div class="container">
+      <div class="cta-card scroll-reveal">
+        <div class="cta-content">
+          <div class="section-label">// ready to start?</div>
+          <h2 class="section-title mt-8">Join CSSC <span class="gradient-text">Today</span></h2>
+          <p class="section-subtitle">It's free. It's fun. It's your community.</p>
+          <div class="hero-actions mt-32">
+            <a href="register.html" class="btn btn-primary btn-xl" id="ctaJoinBtn">Create Free Account →</a>
+            <a href="about.html" class="btn btn-secondary btn-xl" id="ctaLearnBtn">Learn More</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // If logged in, redirect to home
+    if (Auth.isLoggedIn()) {
+      document.querySelector('.hero-actions').innerHTML = `
+        <a href="home.html" class="btn btn-primary btn-xl">Go to Dashboard →</a>
+      `;
+    }
+  </script>
+
+  <script>
+    buildFooter();
+  </script>
+</body>
+</html>

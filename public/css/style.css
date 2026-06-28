@@ -1,0 +1,240 @@
+:root {
+    --bg-deep: #0a0f1d;
+    --bg-surface: #111827;
+    --accent-blue: #3b82f6;
+    --accent-neon: #00f0ff;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --border-color: #1e293b;
+    --status-success: #10b981;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--bg-deep);
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* Utility Code Font for Tech Feel */
+.code-font {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Navigation */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 5%;
+    background-color: rgba(10, 15, 29, 0.8);
+    backdrop-filter: blur(12px);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: -0.5px;
+}
+
+.logo span {
+    color: var(--accent-neon);
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+}
+
+.nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: var(--accent-neon);
+}
+
+/* Hero Section */
+header {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0 1rem;
+    position: relative;
+    background: radial-gradient(circle at 50% 40%, rgba(59, 130, 246, 0.15) 0%, transparent 60%);
+}
+
+.hero-tag {
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--accent-neon);
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+header h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    max-width: 800px;
+    letter-spacing: -1px;
+}
+
+header h1 span {
+    background: linear-gradient(to right, #fff, var(--accent-blue), var(--accent-neon));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+header p {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin-bottom: 2.5rem;
+}
+
+.btn {
+    background-color: var(--accent-blue);
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    border: 1px solid transparent;
+}
+
+.btn:hover {
+    background-color: transparent;
+    border-color: var(--accent-neon);
+    color: var(--accent-neon);
+    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.2);
+}
+
+/* Section layout */
+section {
+    padding: 6rem 10%;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.section-title h2 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.section-title p {
+    color: var(--text-muted);
+}
+
+/* Grid Cards */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    padding: 2.5rem 2rem;
+    border-radius: 12px;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-blue);
+}
+
+.card-icon {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: var(--accent-neon);
+}
+
+.card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* Firebase Showcase Styling */
+.firebase-section {
+    background-color: var(--bg-surface); 
+    border-top: 1px solid var(--border-color); 
+    border-bottom: 1px solid var(--border-color);
+}
+
+.db-status-container {
+    max-width: 600px; 
+    margin: 0 auto; 
+    text-align: center; 
+    background: var(--bg-deep); 
+    padding: 2rem; 
+    border-radius: 8px; 
+    border: 1px dashed var(--accent-blue);
+}
+
+.status-loading {
+    color: var(--accent-neon); 
+    margin-bottom: 0.5rem;
+}
+
+.status-connected {
+    color: var(--status-success);
+    margin-bottom: 0.5rem;
+}
+
+/* Footer */
+footer {
+    background-color: #060a14;
+    text-align: center;
+    padding: 3rem 1rem;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 { font-size: 2.5rem; }
+    .nav-links { display: none; }
+    section { padding: 4rem 5%; }
+}
