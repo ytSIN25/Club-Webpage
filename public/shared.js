@@ -3,7 +3,9 @@
 // =============================================
 
 // ── Auth State ──
+// ── Auth State ──
 const Auth = {
+  activePage: '',
   getCurrentUser() {
     try { return JSON.parse(localStorage.getItem('cssc_user')); } catch { return null; }
   },
@@ -27,6 +29,293 @@ const Auth = {
   isAdmin() {
     const user = this.getCurrentUser();
     return user && user.role === 'admin';
+  },
+  updateNav() {
+    const oldNav = document.getElementById('mainNav');
+    if (oldNav) oldNav.remove();
+    buildNav(this.activePage);
+  },
+  ensureAuth(callback) {
+    if (this.isLoggedIn()) {
+      if (callback) callback();
+      return true;
+    }
+    this.showLoginModal(callback);
+    return false;
+  },
+  showLoginModal(callback, initialTab = 'signin') {
+    if (document.getElementById('authModalBackdrop')) return;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'auth-modal-backdrop';
+    backdrop.id = 'authModalBackdrop';
+
+    backdrop.innerHTML = `
+      <div class="auth-modal-card">
+        <button class="auth-modal-close" id="modalCloseBtn">&times;</button>
+        <div class="auth-modal-tabs">
+          <button class="auth-modal-tab active" id="tabSignIn">Sign In</button>
+          <button class="auth-modal-tab" id="tabSignUp">Join Us</button>
+        </div>
+
+        <div class="alert alert-error hidden" id="modalAlert" style="margin-bottom:16px;padding:10px 14px;font-size:0.85rem;">
+          <span>⚠</span> <span id="modalAlertMsg"></span>
+        </div>
+
+        <!-- Sign In Form -->
+        <form id="modalSignInForm" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="modalEmail">Email Address</label>
+            <input type="email" id="modalEmail" class="form-input" placeholder="you@university.edu" required />
+            <div class="form-error" id="modalEmailError">Please enter a valid email.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="modalPassword">Password</label>
+            <div style="position:relative;">
+              <input type="password" id="modalPassword" class="form-input" placeholder="Enter your password" required style="padding-right:48px;" />
+              <button type="button" id="modalTogglePwd" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;">👁</button>
+            </div>
+            <div class="form-error" id="modalPwdError">Please enter your password.</div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg mt-8" id="modalSignInBtn">Sign In →</button>
+          <div style="text-align:center;margin-top:12px;"><small class="text-muted">Demo Admin: admin@cssc.edu / admin123</small></div>
+        </form>
+
+        <!-- Sign Up Form -->
+        <form id="modalSignUpForm" class="hidden" novalidate>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="modalFirstName">First Name</label>
+              <input type="text" id="modalFirstName" class="form-input" placeholder="Jane" required />
+              <div class="form-error" id="modalFirstNameError">Required</div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="modalLastName">Last Name</label>
+              <input type="text" id="modalLastName" class="form-input" placeholder="Doe" required />
+              <div class="form-error" id="modalLastNameError">Required</div>
+            </div>
+          </div>
+          <div class="form-group mt-16">
+            <label class="form-label" for="modalRegEmail">University Email</label>
+            <input type="email" id="modalRegEmail" class="form-input" placeholder="student@university.edu" required />
+            <div class="form-error" id="modalRegEmailError">Please enter a valid email.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="modalRegPassword">Password</label>
+            <div style="position:relative;">
+              <input type="password" id="modalRegPassword" class="form-input" placeholder="Min. 8 characters" required style="padding-right:48px;" />
+              <button type="button" id="modalToggleRegPwd" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;">👁</button>
+            </div>
+            <div class="form-error" id="modalRegPwdError">Password must be at least 8 characters.</div>
+          </div>
+          <div id="modalStrengthBar" style="height:4px;border-radius:2px;background:var(--glass-border);margin:-12px 0 16px;overflow:hidden;">
+            <div id="modalStrengthFill" style="height:100%;width:0%;transition:all 0.3s ease;border-radius:2px;"></div>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-start;gap:10px;">
+            <input type="checkbox" id="modalAgreeTerms" style="margin-top:3px;accent-color:var(--purple);width:16px;height:16px;cursor:pointer;" />
+            <label for="modalAgreeTerms" style="font-size:0.85rem;color:var(--text-secondary);cursor:pointer;line-height:1.5;">
+              I agree to the Terms of Membership.
+            </label>
+          </div>
+          <div class="form-error" id="modalTermsError" style="margin-top:-12px;margin-bottom:16px;">You must agree to the terms.</div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg mt-8" id="modalSignUpBtn">Create Account →</button>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(backdrop);
+
+    // Close button
+    const closeBtn = document.getElementById('modalCloseBtn');
+    closeBtn.addEventListener('click', () => backdrop.remove());
+
+    // Switch Tabs
+    const tabSignIn = document.getElementById('tabSignIn');
+    const tabSignUp = document.getElementById('tabSignUp');
+    const formSignIn = document.getElementById('modalSignInForm');
+    const formSignUp = document.getElementById('modalSignUpForm');
+    const alertBox = document.getElementById('modalAlert');
+
+    const selectSignIn = () => {
+      tabSignIn.classList.add('active');
+      tabSignUp.classList.remove('active');
+      formSignIn.classList.remove('hidden');
+      formSignUp.classList.add('hidden');
+      alertBox.classList.add('hidden');
+    };
+
+    const selectSignUp = () => {
+      tabSignUp.classList.add('active');
+      tabSignIn.classList.remove('active');
+      formSignUp.classList.remove('hidden');
+      formSignIn.classList.add('hidden');
+      alertBox.classList.add('hidden');
+    };
+
+    tabSignIn.addEventListener('click', selectSignIn);
+    tabSignUp.addEventListener('click', selectSignUp);
+
+    // Set initial tab
+    if (initialTab === 'signup') {
+      selectSignUp();
+    } else {
+      selectSignIn();
+    }
+
+    // Toggle Password Visibility
+    const togglePwdBtn = document.getElementById('modalTogglePwd');
+    const pwdInput = document.getElementById('modalPassword');
+    togglePwdBtn.addEventListener('click', () => {
+      pwdInput.type = pwdInput.type === 'password' ? 'text' : 'password';
+    });
+
+    const toggleRegPwdBtn = document.getElementById('modalToggleRegPwd');
+    const regPwdInput = document.getElementById('modalRegPassword');
+    toggleRegPwdBtn.addEventListener('click', () => {
+      regPwdInput.type = regPwdInput.type === 'password' ? 'text' : 'password';
+    });
+
+    // Password Strength Meter
+    regPwdInput.addEventListener('input', () => {
+      const val = regPwdInput.value;
+      let strength = 0;
+      if (val.length >= 8) strength++;
+      if (/[A-Z]/.test(val)) strength++;
+      if (/[0-9]/.test(val)) strength++;
+      if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+      const fill = document.getElementById('modalStrengthFill');
+      const colors = ['#ef4444', '#f59e0b', '#10b981', '#06b6d4'];
+      const widths = ['25%', '50%', '75%', '100%'];
+      fill.style.width = val ? widths[strength - 1] || '10%' : '0%';
+      fill.style.background = val ? colors[strength - 1] || '#ef4444' : '';
+    });
+
+    const showAlert = (msg) => {
+      alertBox.classList.remove('hidden');
+      document.getElementById('modalAlertMsg').textContent = msg;
+    };
+
+    // Sign In Submit
+    formSignIn.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('modalEmail').value.trim();
+      const password = pwdInput.value;
+      const btn = document.getElementById('modalSignInBtn');
+
+      let valid = true;
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        document.getElementById('modalEmailError').classList.add('show');
+        document.getElementById('modalEmail').classList.add('error');
+        valid = false;
+      } else {
+        document.getElementById('modalEmailError').classList.remove('show');
+        document.getElementById('modalEmail').classList.remove('error');
+      }
+
+      if (!password) {
+        document.getElementById('modalPwdError').classList.add('show');
+        pwdInput.classList.add('error');
+        valid = false;
+      } else {
+        document.getElementById('modalPwdError').classList.remove('show');
+        pwdInput.classList.remove('error');
+      }
+
+      if (!valid) return;
+
+      btn.innerHTML = '<div class="spinner"></div> Signing in...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        const user = Users.find(email);
+        if (!user) {
+          showAlert('No account found with that email.');
+          btn.innerHTML = 'Sign In →';
+          btn.disabled = false;
+          return;
+        }
+        if (user.password !== password) {
+          showAlert('Incorrect password.');
+          btn.innerHTML = 'Sign In →';
+          btn.disabled = false;
+          return;
+        }
+        Auth.setUser(user);
+        Toast.show('Welcome back, ' + user.name.split(' ')[0] + '!', 'success');
+        Auth.updateNav();
+        backdrop.remove();
+        if (callback) callback();
+      }, 600);
+    });
+
+    // Sign Up Submit
+    formSignUp.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const firstName = document.getElementById('modalFirstName').value.trim();
+      const lastName = document.getElementById('modalLastName').value.trim();
+      const email = document.getElementById('modalRegEmail').value.trim();
+      const password = regPwdInput.value;
+      const agreed = document.getElementById('modalAgreeTerms').checked;
+      const btn = document.getElementById('modalSignUpBtn');
+
+      let valid = true;
+
+      const setError = (id, errId, condition, msg) => {
+        if (condition) {
+          document.getElementById(id).classList.add('error');
+          document.getElementById(errId).classList.add('show');
+          if (msg) document.getElementById(errId).textContent = msg;
+          valid = false;
+        } else {
+          document.getElementById(id).classList.remove('error');
+          document.getElementById(errId).classList.remove('show');
+        }
+      };
+
+      setError('modalFirstName', 'modalFirstNameError', !firstName);
+      setError('modalLastName', 'modalLastNameError', !lastName);
+      setError('modalRegEmail', 'modalRegEmailError', !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+      setError('modalRegPassword', 'modalRegPwdError', password.length < 8, 'Password must be at least 8 characters.');
+
+      if (!agreed) {
+        document.getElementById('modalTermsError').classList.add('show');
+        valid = false;
+      } else {
+        document.getElementById('modalTermsError').classList.remove('show');
+      }
+
+      if (!valid) return;
+
+      if (Users.find(email)) {
+        showAlert('An account with this email already exists.');
+        return;
+      }
+
+      btn.innerHTML = '<div class="spinner"></div> Creating account...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        const newUser = {
+          id: generateId(),
+          name: `${firstName} ${lastName}`,
+          firstName, lastName,
+          email,
+          studentId: null,
+          password,
+          role: 'member',
+          joinedDate: new Date().toISOString(),
+          joinedActivities: [],
+          bio: ''
+        };
+        Users.add(newUser);
+        Auth.setUser(newUser);
+        Toast.show('Welcome to CSSC, ' + firstName + '! 🎉', 'success');
+        Auth.updateNav();
+        backdrop.remove();
+        if (callback) callback();
+      }, 700);
+    });
   }
 };
 
@@ -263,11 +552,12 @@ const Toast = {
 
 // ── Navigation Builder ──
 function buildNav(activePage = '') {
+  Auth.activePage = activePage;
   const user = Auth.getCurrentUser();
   const isAdmin = user?.role === 'admin';
 
   const navLinks = [
-    { href: 'home.html', label: 'Home', id: 'home' },
+    { href: user ? 'home.html' : 'index.html', label: 'Home', id: 'home' },
     { href: 'events.html', label: 'Event Hub', id: 'events' },
     { href: 'committee.html', label: 'Committee', id: 'committee' },
     { href: 'about.html', label: 'About', id: 'about' },
@@ -282,7 +572,7 @@ function buildNav(activePage = '') {
 
   const navHTML = `
     <nav class="navbar" id="mainNav">
-      <a href="home.html" class="navbar-brand">
+      <a href="${user ? 'home.html' : 'index.html'}" class="navbar-brand">
         <div class="logo-icon">💻</div>
         CSSC<span>.</span>
       </a>
@@ -292,8 +582,8 @@ function buildNav(activePage = '') {
           <a href="account.html" class="btn btn-secondary btn-sm">${user.name.split(' ')[0]}</a>
           <button onclick="Auth.logout()" class="btn btn-outline btn-sm">Logout</button>
         ` : `
-          <a href="login.html" class="btn btn-secondary btn-sm">Login</a>
-          <a href="register.html" class="btn btn-primary btn-sm">Join Us</a>
+          <button onclick="Auth.showLoginModal()" class="btn btn-secondary btn-sm">Login</button>
+          <button onclick="Auth.showLoginModal(null, 'signup')" class="btn btn-primary btn-sm">Join Us</button>
         `}
         <div class="navbar-hamburger" id="hamburger" onclick="toggleMobileNav()">
           <span></span><span></span><span></span>

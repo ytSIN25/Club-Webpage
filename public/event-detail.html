@@ -139,7 +139,6 @@
 <body>
   <script src="shared.js"></script>
   <script>
-    Auth.requireAuth();
     buildNav('events');
   </script>
 
@@ -265,7 +264,7 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get('id');
-    const user = Auth.getCurrentUser();
+    let user = Auth.getCurrentUser();
 
     function getCategoryIcon(cat) {
       const icons = { 'Competition': '🏆', 'Workshop': '🛠', 'Talk': '🎤', 'Study Group': '📖', 'Social': '🎉' };
@@ -327,7 +326,7 @@
       if (ev.isPast) {
         document.getElementById('actionSection').innerHTML = '<div class="alert alert-info"><span>ℹ</span> This event has already taken place.</div>';
       } else {
-        const isJoined = (user.joinedActivities || []).includes(eventId);
+        const isJoined = user && (user.joinedActivities || []).includes(eventId);
         const isFull = ev.capacity && attended >= ev.capacity && !isJoined;
         const btn = document.getElementById('actionBtn');
         const note = document.getElementById('actionNote');
@@ -341,6 +340,9 @@
           btn.className = 'btn btn-secondary btn-block btn-lg';
           note.textContent = `All ${ev.capacity} spots are taken.`;
         } else {
+          btn.textContent = 'Join Event →';
+          btn.disabled = false;
+          btn.className = 'btn btn-primary btn-block btn-lg';
           note.textContent = `${ev.capacity ? ev.capacity - attended + ' spots left · ' : ''}Free to join`;
         }
       }
@@ -354,22 +356,28 @@
     function handleAction() {
       const ev = Events.get(eventId);
       if (!ev || ev.isPast) return;
-      const isJoined = (user.joinedActivities || []).includes(eventId);
-      if (isJoined) {
-        if (confirm('Are you sure you want to unregister from this event?')) {
-          Events.leaveEvent(eventId, user.email);
+
+      Auth.ensureAuth(() => {
+        user = Auth.getCurrentUser();
+        const isJoined = user && (user.joinedActivities || []).includes(eventId);
+        if (isJoined) {
+          if (confirm('Are you sure you want to unregister from this event?')) {
+            Events.leaveEvent(eventId, user.email);
+            const updated = Users.find(user.email);
+            Auth.setUser(updated);
+            user = Auth.getCurrentUser();
+            Toast.show('You\'ve been unregistered.', 'info');
+            loadEvent();
+          }
+        } else {
+          Events.joinEvent(eventId, user.email);
           const updated = Users.find(user.email);
           Auth.setUser(updated);
-          Toast.show('You\'ve been unregistered.', 'info');
+          user = Auth.getCurrentUser();
+          Toast.show('You\'re registered! See you there 🎉', 'success');
           loadEvent();
         }
-      } else {
-        Events.joinEvent(eventId, user.email);
-        const updated = Users.find(user.email);
-        Auth.setUser(updated);
-        Toast.show('You\'re registered! See you there 🎉', 'success');
-        loadEvent();
-      }
+      });
     }
 
     loadEvent();
