@@ -571,7 +571,7 @@ function buildNav(activePage = '') {
 
   const navHTML = `
     <nav class="navbar" id="mainNav">
-      <a href="${user ? 'home.html' : 'index.html'}" class="navbar-brand">
+      <a href="index.html" class="navbar-brand">
         <div class="logo-icon">💻</div>
         CSSC<span>.</span>
       </a>
