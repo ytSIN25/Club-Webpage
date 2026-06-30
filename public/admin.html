@@ -184,14 +184,53 @@
 </head>
 <body>
   <script src="shared.js"></script>
-  <script>
-    if (!Auth.requireAuth()) return;
-    if (!Auth.isAdmin()) {
-      window.location.href = 'home.html';
-      return;
-    }
-    buildNav('admin');
+  <script src="shared.js"></script>
+  <script type="module">
+    // Import both Auth and Firestore functions from the Firebase CDN
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // Wait asynchronously for Firebase to confirm the login session
+    onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        // 1. Not logged in -> Bounce to login page with a redirect back URL
+        const currentUrl = encodeURIComponent(window.location.href);
+        window.location.href = `index_login.html?redirect=${currentUrl}`;
+        return;
+      }
+
+      try {
+        // 2. Fetch the user's custom profile document from the 'users' collection using their UID
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+
+          // 3. Verify if their role field matches 'admin'
+          if (userData.role === "admin") {
+            // User is authorized! Initialize the admin panel view
+            renderDashboard(); 
+          } else {
+            // User is logged in but NOT an admin -> Kick them to the member dashboard
+            alert("Access Denied: You do not have permission to view the Admin Panel.");
+            window.location.href = "home.html";
+          }
+        } else {
+          // Document doesn't exist in Firestore
+          alert("Account profile error. Please contact a committee member.");
+          window.location.href = "home.html";
+        }
+      } catch (error) {
+        console.error("Error verifying admin permissions:", error);
+        window.location.href = "home.html";
+      }
+    });
   </script>
+  <script>buildNav('account');</script>
 
   <div class="page-wrapper" style="padding-bottom:0;">
     <div class="admin-layout">
