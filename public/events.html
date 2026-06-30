@@ -317,7 +317,7 @@
       grid.innerHTML = filtered.map(ev => {
         const attended = (ev.attendees || []).length;
         const pct = ev.capacity ? Math.min(100, (attended / ev.capacity) * 100) : 0;
-        const isJoined = user && (user.joinedActivities || []).includes(ev.id);
+        const isJoined = user && ev.attendees?.includes(user.email);
         const isFull = ev.capacity && attended >= ev.capacity;
 
         return `
@@ -380,10 +380,6 @@
         user = Auth.getCurrentUser();
         Events.joinEvent(eventId, user.email);
         Toast.show('You\'ve registered for this event! 🎉', 'success');
-        // Reload user
-        const updated = Users.find(user.email);
-        Auth.setUser(updated);
-        user = Auth.getCurrentUser();
         renderEvents();
       });
     }
@@ -394,9 +390,6 @@
         if (confirm('Are you sure you want to leave this event?')) {
           Events.leaveEvent(eventId, user.email);
           Toast.show('You\'ve unregistered from the event.', 'info');
-          const updated = Users.find(user.email);
-          Auth.setUser(updated);
-          user = Auth.getCurrentUser();
           renderEvents();
         }
       });

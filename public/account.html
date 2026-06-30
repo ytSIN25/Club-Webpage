@@ -139,9 +139,37 @@
 </head>
 <body>
   <script src="shared.js"></script>
-  <script>
-    buildNav('account');
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7KrouSG4fiDNipOGT6IoUJp6ssyFakzc",
+      authDomain: "cssc-webpage.firebaseapp.com",
+      projectId: "cssc-webpage",
+      storageBucket: "cssc-webpage.firebasestorage.app",
+      messagingSenderId: "353738134153",
+      appId: "1:353738134153:web:1534b3983f2ca7de3b2c58"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    window.FirebaseDB = getFirestore(app);
+
+    const auth = getAuth();
+
+    // Wait asynchronously for Firebase to confirm the login session
+    onAuthStateChanged(auth, (firebaseUser) => {
+      if (!firebaseUser) {
+        // Not logged in -> Bounce to login page with a redirect back URL
+        const currentUrl = encodeURIComponent(window.location.href);
+        window.location.href = `index_login.html?redirect=${currentUrl}`;
+        return;
+      }
+      console.log("Authenticated user:", firebaseUser.email);
+    });
   </script>
+  <script>buildNav('account');</script>
 
   <div class="page-wrapper">
     <div class="container" style="padding-top:40px;padding-bottom:80px;">
@@ -172,7 +200,10 @@
         <!-- Left: Account Details -->
         <div>
           <div class="card-glass">
-            <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:20px;">Account Details</h2>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:700;margin:0;">Account Details</h2>
+              <div id="accountActionPlaceholder"></div>
+            </div>
 
             <!-- View Mode -->
             <div id="viewSection" class="view-section">
@@ -187,10 +218,6 @@
               <div class="info-row">
                 <div class="info-label">Student ID</div>
                 <div class="info-value" id="infoStudentId">—</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">Bio</div>
-                <div class="info-value" id="infoBio" style="color:var(--text-secondary);">—</div>
               </div>
               <div class="info-row">
                 <div class="info-label">Role</div>
@@ -219,10 +246,6 @@
                 <label class="form-label">Email</label>
                 <input type="email" class="form-input" id="editEmail" disabled style="opacity:0.5;cursor:not-allowed;" />
                 <small class="text-muted" style="font-size:0.75rem;">Email cannot be changed</small>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="editBio">Bio <span class="text-muted">(optional)</span></label>
-                <textarea id="editBio" class="form-input" rows="3" placeholder="Tell us about yourself..."></textarea>
               </div>
               <div style="display:flex;gap:10px;">
                 <button class="btn btn-primary" onclick="saveProfile()" id="saveBtn">Save Changes</button>
@@ -298,14 +321,20 @@
       document.getElementById('profileName').textContent = user.name;
       document.getElementById('profileEmail').textContent = user.email;
       document.getElementById('roleBadge').textContent = user.role === 'admin' ? '⚙ Admin' : '👤 Member';
+      const activities = Events.getAll().filter(ev => ev.attendees?.includes(user.email));
       document.getElementById('joinedBadge').textContent = 'Joined ' + new Date(user.joinedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      document.getElementById('activityBadge').textContent = (user.joinedActivities || []).length + ' Events';
+      document.getElementById('activityBadge').textContent = activities.length + ' Events';
+
+      // Place account button beside heading (opens edit view)
+      const acctPlaceholder = document.getElementById('accountActionPlaceholder');
+      if (acctPlaceholder) {
+        acctPlaceholder.innerHTML = `<button class="btn btn-outline btn-sm" id="editAccountBtn" onclick="toggleEdit()">Edit Profile</button>`;
+      }
 
       // Info rows
       document.getElementById('infoName').textContent = user.name;
       document.getElementById('infoEmail').textContent = user.email;
       document.getElementById('infoStudentId').textContent = user.studentId || 'Not provided';
-      document.getElementById('infoBio').textContent = user.bio || 'No bio added yet.';
       document.getElementById('infoRole').textContent = user.role === 'admin' ? 'Administrator' : 'Member';
       document.getElementById('infoJoined').textContent = formatDate(user.joinedDate);
 
@@ -313,14 +342,11 @@
       document.getElementById('editFirstName').value = user.firstName || user.name.split(' ')[0];
       document.getElementById('editLastName').value = user.lastName || user.name.split(' ').slice(1).join(' ');
       document.getElementById('editEmail').value = user.email;
-      document.getElementById('editBio').value = user.bio || '';
 
       // Joined Activities
-      const activities = user.joinedActivities || [];
       const actList = document.getElementById('joinedActivitiesList');
       if (activities.length === 0) return;
-      const evts = activities.map(id => Events.get(id)).filter(Boolean);
-      actList.innerHTML = evts.map(ev => `
+      actList.innerHTML = activities.map(ev => `
         <div class="activity-item">
           <div class="activity-icon" style="background:rgba(124,58,237,0.12);">
             ${ev.isPast ? '✅' : '🔵'}
@@ -352,18 +378,43 @@
       }
     }
 
-    function saveProfile() {
+    async function saveProfile() {
       const firstName = document.getElementById('editFirstName').value.trim();
       const lastName = document.getElementById('editLastName').value.trim();
-      const bio = document.getElementById('editBio').value.trim();
+      const displayName = `${firstName} ${lastName}`;
 
       if (!firstName) return Toast.show('First name is required.', 'error');
 
-      Users.update(user.email, {
-        firstName, lastName,
-        name: `${firstName} ${lastName}`,
-        bio
-      });
+      const updatedData = {
+        firstName,
+        lastName,
+        name: displayName,
+        fullName: displayName
+      };
+
+      let dbUpdated = false;
+      if (user?.uid) {
+        try {
+          const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+          const db = window.FirebaseDB;
+          if (db) {
+            await updateDoc(doc(db, 'users', user.uid), updatedData);
+            dbUpdated = true;
+          }
+        } catch (error) {
+          console.error('Firestore profile update failed:', error);
+          Toast.show('Unable to update the database. Please try again.', 'error');
+          return;
+        }
+      }
+
+      if (!dbUpdated) {
+        Toast.show('Unable to update profile because database connection is unavailable.', 'error');
+        return;
+      }
+
+      Users.update(user.email, updatedData);
+      user = Auth.getCurrentUser();
 
       document.getElementById('editSuccess').classList.remove('hidden');
       setTimeout(() => {

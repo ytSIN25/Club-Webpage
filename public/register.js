@@ -145,7 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const user = userCredential.user;
 
             // Step 2: Write additional user attributes directly into Cloud Firestore using the Auth UID
+            const [firstName, ...lastParts] = fullName.split(' ');
             const userProfileData = {
+                name: fullName,
                 fullName: fullName,
                 studentId: studentId,
                 contactNumber: contactNumber,
@@ -153,8 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 year: year,
                 email: email,
                 role: 'guest',
-                joinedDate: new Date().toISOString(),
-                isActive: true
+                isActive: true,
+                joinedDate: new Date().toISOString()
             };
 
             await setDoc(doc(db, "users", user.uid), userProfileData);

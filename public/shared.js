@@ -2,38 +2,116 @@
 // CSSC - Shared JavaScript Utilities
 // =============================================
 
-// ── Auth State ──
+// =========================================================================
+// CSSC - Shared JavaScript Utilities (Updated Auth Block for Firebase Support)
+// =========================================================================
+
 const Auth = {
   activePage: '',
+
+  normalizeUser(user) {
+    if (!user || typeof user !== 'object') return null;
+    const normalized = { ...user };
+
+    if (!normalized.name && normalized.fullName) normalized.name = normalized.fullName;
+    if (!normalized.fullName && normalized.name) normalized.fullName = normalized.name;
+
+    const nameParts = (normalized.name || '').trim().split(' ');
+    normalized.firstName = normalized.firstName || nameParts[0] || '';
+    normalized.lastName = normalized.lastName || normalized.lastName || nameParts.slice(1).join(' ') || '';
+
+    normalized.isActive = normalized.isActive !== false && normalized.status !== 'inactive';
+    delete normalized.status;
+    delete normalized.joinedActivities;
+    delete normalized.bio;
+    normalized.role = normalized.role || 'member';
+    normalized.joinedDate = normalized.joinedDate || new Date().toISOString();
+
+    return normalized;
+  },
+
+  // Retrieves the persistent browser session populated by Firebase Login / Registration
   getCurrentUser() {
-    try { return JSON.parse(localStorage.getItem('cssc_user')); } catch { return null; }
+    try { 
+      const stored = JSON.parse(localStorage.getItem('cssc_user'));
+      return this.normalizeUser(stored);
+    } catch { 
+      return null; 
+    }
   },
+
+  // Manually sets or refreshes local storage cached session parameters
   setUser(user) {
-    localStorage.setItem('cssc_user', JSON.stringify(user));
+    const normalized = this.normalizeUser(user);
+    if (!normalized) return;
+    localStorage.setItem('cssc_user', JSON.stringify(normalized));
+
+    if (normalized.email) {
+      const existing = Users.find(normalized.email);
+      const updatedUser = {
+        id: existing?.id || normalized.uid || normalized.email,
+        name: normalized.name,
+        email: normalized.email,
+        password: normalized.password || existing?.password || '',
+        role: normalized.role,
+        joinedDate: normalized.joinedDate,
+        studentId: normalized.studentId || existing?.studentId || '',
+        isActive: normalized.isActive
+      };
+      if (existing) {
+        Users.update(normalized.email, updatedUser);
+      } else {
+        Users.add(updatedUser);
+      }
+    }
   },
+
+  // Signs out cleanly. Prioritizes the exposed Firebase session handler if loaded
   logout() {
-    localStorage.removeItem('cssc_user');
-    window.location.href = 'index.html';
+    if (window.FirebaseSession && typeof window.FirebaseSession.logout === 'function') {
+      window.FirebaseSession.logout();
+    } else {
+      localStorage.removeItem('cssc_user');
+      window.location.href = 'index.html';
+    }
   },
+
+  // Returns true if an active session object exists locally
   isLoggedIn() {
-    return !!this.getCurrentUser();
+    const user = this.getCurrentUser();
+    return !!user && user.isActive !== false;
   },
+
+  // Enforces page guard conditions on standard text files
   requireAuth() {
     if (!this.isLoggedIn()) {
-      window.location.href = 'login.html';
+      if (window.FirebaseSession && typeof window.FirebaseSession.protectPage === 'function') {
+        window.FirebaseSession.protectPage('login.html');
+      } else {
+        const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `login.html?redirect=${currentPath}`;
+      }
       return false;
     }
     return true;
   },
+
+  // Evaluates role authorization parameters mapped from Cloud Firestore records
   isAdmin() {
     const user = this.getCurrentUser();
     return user && user.role === 'admin';
   },
+
+  // Triggers dynamic navigation bar redraws based on user authentication state
   updateNav() {
     const oldNav = document.getElementById('mainNav');
     if (oldNav) oldNav.remove();
-    buildNav(this.activePage);
+    if (typeof buildNav === 'function') {
+      buildNav(this.activePage);
+    }
   },
+
+  // Inline callback verification pattern
   ensureAuth(callback) {
     if (this.isLoggedIn()) {
       if (callback) callback();
@@ -42,119 +120,11 @@ const Auth = {
     this.showLoginModal(callback);
     return false;
   },
+
+  // Renders the fallback validation modal layout if inline auth checks fail
   showLoginModal(callback, initialTab = 'signin') {
-    if (document.getElementById('authModalBackdrop')) return;
-
-    const backdrop = document.createElement('div');
-    backdrop.className = 'auth-modal-backdrop';
-    backdrop.id = 'authModalBackdrop';
-
-    backdrop.innerHTML = `
-      <div class="auth-modal-card">
-        <button class="auth-modal-close" id="modalCloseBtn">&times;</button>
-
-        <div class="alert alert-error hidden" id="modalAlert" style="margin-bottom:16px;padding:10px 14px;font-size:0.85rem;">
-          <span>⚠</span> <span id="modalAlertMsg"></span>
-        </div>
-
-        <form id="modalSignInForm" novalidate>
-          <div class="form-group">
-            <label class="form-label" for="modalEmail">Email Address</label>
-            <input type="email" id="modalEmail" class="form-input" placeholder="you@university.edu" required />
-            <div class="form-error" id="modalEmailError">Please enter a valid email.</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="modalPassword">Password</label>
-            <div style="position:relative;">
-              <input type="password" id="modalPassword" class="form-input" placeholder="Enter your password" required style="padding-right:48px;" />
-              <button type="button" id="modalTogglePwd" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;">👁</button>
-            </div>
-            <div class="form-error" id="modalPwdError">Please enter your password.</div>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg mt-8" id="modalSignInBtn">Sign In →</button>
-          <div style="text-align:center;margin-top:14px;">
-            <small class="text-muted">New here?</small>
-            <a href="register.html" class="btn btn-secondary btn-block mt-8" id="modalRegisterBtn">Create New Account</a>
-          </div>
-          <div style="text-align:center;margin-top:12px;"><small class="text-muted">Demo Admin: admin@cssc.edu / admin123</small></div>
-        </form>
-      </div>
-    `;
-
-    document.body.appendChild(backdrop);
-
-    // Close button
-    const closeBtn = document.getElementById('modalCloseBtn');
-    closeBtn.addEventListener('click', () => backdrop.remove());
-
-    const formSignIn = document.getElementById('modalSignInForm');
-    const alertBox = document.getElementById('modalAlert');
-
-    // Toggle Password Visibility
-    const togglePwdBtn = document.getElementById('modalTogglePwd');
-    const pwdInput = document.getElementById('modalPassword');
-    togglePwdBtn.addEventListener('click', () => {
-      pwdInput.type = pwdInput.type === 'password' ? 'text' : 'password';
-    });
-
-    const showAlert = (msg) => {
-      alertBox.classList.remove('hidden');
-      document.getElementById('modalAlertMsg').textContent = msg;
-    };
-
-    // Sign In Submit
-    formSignIn.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = document.getElementById('modalEmail').value.trim();
-      const password = pwdInput.value;
-      const btn = document.getElementById('modalSignInBtn');
-
-      let valid = true;
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        document.getElementById('modalEmailError').classList.add('show');
-        document.getElementById('modalEmail').classList.add('error');
-        valid = false;
-      } else {
-        document.getElementById('modalEmailError').classList.remove('show');
-        document.getElementById('modalEmail').classList.remove('error');
-      }
-
-      if (!password) {
-        document.getElementById('modalPwdError').classList.add('show');
-        pwdInput.classList.add('error');
-        valid = false;
-      } else {
-        document.getElementById('modalPwdError').classList.remove('show');
-        pwdInput.classList.remove('error');
-      }
-
-      if (!valid) return;
-
-      btn.innerHTML = '<div class="spinner"></div> Signing in...';
-      btn.disabled = true;
-
-      setTimeout(() => {
-        const user = Users.find(email);
-        if (!user) {
-          showAlert('No account found with that email.');
-          btn.innerHTML = 'Sign In →';
-          btn.disabled = false;
-          return;
-        }
-        if (user.password !== password) {
-          showAlert('Incorrect password.');
-          btn.innerHTML = 'Sign In →';
-          btn.disabled = false;
-          return;
-        }
-        Auth.setUser(user);
-        Toast.show('Welcome back, ' + user.name.split(' ')[0] + '!', 'success');
-        Auth.updateNav();
-        backdrop.remove();
-        if (callback) callback();
-      }, 600);
-    });
-
+    const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `login.html?redirect=${currentPath}`;
   }
 };
 
@@ -170,15 +140,21 @@ const Users = {
     return this.getAll().find(u => u.email.toLowerCase() === email.toLowerCase());
   },
   add(user) {
+    const cleaned = { ...user };
+    delete cleaned.joinedActivities;
+    delete cleaned.bio;
     const users = this.getAll();
-    users.push(user);
+    users.push(cleaned);
     this.save(users);
   },
   update(email, updates) {
     const users = this.getAll();
     const idx = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
     if (idx !== -1) {
-      users[idx] = { ...users[idx], ...updates };
+      const updatedUser = { ...users[idx], ...updates };
+      delete updatedUser.joinedActivities;
+      delete updatedUser.bio;
+      users[idx] = updatedUser;
       this.save(users);
       if (Auth.getCurrentUser()?.email?.toLowerCase() === email.toLowerCase()) {
         Auth.setUser(users[idx]);
@@ -219,15 +195,6 @@ const Events = {
       if (!ev.attendees) ev.attendees = [];
       if (!ev.attendees.includes(userEmail)) ev.attendees.push(userEmail);
       this.save(events);
-      // Update user joined activities
-      const user = Users.find(userEmail);
-      if (user) {
-        if (!user.joinedActivities) user.joinedActivities = [];
-        if (!user.joinedActivities.includes(eventId)) {
-          user.joinedActivities.push(eventId);
-          Users.update(userEmail, { joinedActivities: user.joinedActivities });
-        }
-      }
     }
   },
   leaveEvent(eventId, userEmail) {
@@ -236,11 +203,6 @@ const Events = {
     if (ev && ev.attendees) {
       ev.attendees = ev.attendees.filter(e => e !== userEmail);
       this.save(events);
-      const user = Users.find(userEmail);
-      if (user && user.joinedActivities) {
-        user.joinedActivities = user.joinedActivities.filter(id => id !== eventId);
-        Users.update(userEmail, { joinedActivities: user.joinedActivities });
-      }
     }
   }
 };
@@ -358,8 +320,7 @@ function seedAdmin() {
       password: 'admin123',
       role: 'admin',
       joinedDate: new Date().toISOString(),
-      joinedActivities: [],
-      bio: 'System Administrator'
+      isActive: true
     });
   }
 }
@@ -412,7 +373,7 @@ function buildNav(activePage = '') {
   const navHTML = `
     <nav class="navbar" id="mainNav">
       <a href="index.html" class="navbar-brand">
-        <div class="logo-icon">💻</div>
+        <img class="logo-icon" src="favicon.png" alt="CSSC logo" />
         CSSC<span>.</span>
       </a>
       <div class="navbar-links" id="navLinks">${linksHTML}</div>
@@ -452,7 +413,7 @@ function buildFooter() {
         <div class="footer-grid">
           <div class="footer-brand">
             <div class="navbar-brand" style="margin-bottom:12px;">
-              <div class="logo-icon">💻</div>
+              <img class="logo-icon" src="favicon.png" alt="CSSC logo" />
               CSSC<span style="color:var(--purple-light)">.</span>
             </div>
             <p class="footer-desc">Computer Science Student Club — empowering the next generation of tech innovators through learning, collaboration, and community.</p>
@@ -555,3 +516,15 @@ function initScrollAnimations() {
 }
 
 document.addEventListener('DOMContentLoaded', initScrollAnimations);
+
+if (typeof window.FirebaseSession === 'undefined') {
+  import('./login.js').catch(() => {
+    // Firebase auth module is optional; local fallback session handling remains available.
+  });
+}
+
+if (typeof window.FirebaseSession === 'undefined') {
+  import('./login.js').catch(() => {
+    // If login.js cannot be loaded, the site will still function with local session fallback.
+  });
+}

@@ -10,6 +10,7 @@
 </head>
 <body>
   <script src="shared.js"></script>
+  <script type="module" src="login.js"></script>
 
   <!-- Background Orbs -->
   <div style="position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;">
@@ -85,70 +86,14 @@
   </div>
 
   <script>
-    // Redirect if already logged in
-    if (Auth.isLoggedIn()) window.location.href = 'home.html';
+    if (Auth.isLoggedIn()) {
+      window.location.href = 'home.html';
+    }
 
     function togglePassword() {
       const input = document.getElementById('loginPassword');
       input.type = input.type === 'password' ? 'text' : 'password';
     }
-
-    function showAlert(msg) {
-      document.getElementById('loginAlert').classList.remove('hidden');
-      document.getElementById('loginAlertMsg').textContent = msg;
-    }
-
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      const btn = document.getElementById('loginBtn');
-
-      // Validate
-      let valid = true;
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        document.getElementById('emailError').classList.add('show');
-        document.getElementById('loginEmail').classList.add('error');
-        valid = false;
-      } else {
-        document.getElementById('emailError').classList.remove('show');
-        document.getElementById('loginEmail').classList.remove('error');
-      }
-
-      if (!password) {
-        document.getElementById('pwdError').classList.add('show');
-        document.getElementById('loginPassword').classList.add('error');
-        valid = false;
-      } else {
-        document.getElementById('pwdError').classList.remove('show');
-        document.getElementById('loginPassword').classList.remove('error');
-      }
-
-      if (!valid) return;
-
-      // Simulate loading
-      btn.innerHTML = '<div class="spinner"></div> Signing in...';
-      btn.disabled = true;
-
-      setTimeout(() => {
-        const user = Users.find(email);
-        if (!user) {
-          showAlert('No account found with that email. Please register first.');
-          btn.innerHTML = 'Sign In →';
-          btn.disabled = false;
-          return;
-        }
-        if (user.password !== password) {
-          showAlert('Incorrect password. Please try again.');
-          btn.innerHTML = 'Sign In →';
-          btn.disabled = false;
-          return;
-        }
-        Auth.setUser(user);
-        Toast.show('Welcome back, ' + user.name.split(' ')[0] + '!', 'success');
-        setTimeout(() => window.location.href = 'home.html', 500);
-      }, 800);
-    });
   </script>
 </body>
 </html>

@@ -185,9 +185,10 @@
 <body>
   <script src="shared.js"></script>
   <script>
-    // Admin guard
-    if (!Auth.isLoggedIn() || !Auth.isAdmin()) {
-      window.location.href = Auth.isLoggedIn() ? 'home.html' : 'login.html';
+    if (!Auth.requireAuth()) return;
+    if (!Auth.isAdmin()) {
+      window.location.href = 'home.html';
+      return;
     }
     buildNav('admin');
   </script>
@@ -485,7 +486,7 @@
             <td style="color:var(--text-secondary);font-size:0.82rem;">${u.email}</td>
             <td><span class="badge ${u.role === 'admin' ? 'badge-orange' : 'badge-purple'}">${u.role === 'admin' ? '⚙ Admin' : 'Member'}</span></td>
             <td style="color:var(--text-muted);font-size:0.82rem;">${formatDate(u.joinedDate)}</td>
-            <td>${(u.joinedActivities || []).length}</td>
+            <td>${Events.getAll().filter(ev => ev.attendees?.includes(u.email)).length}</td>
             <td>
               <div style="display:flex;gap:6px;">
                 ${u.role !== 'admin' ? `<button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:5px 10px;" onclick="promoteAdmin('${u.email}')">Make Admin</button>` : ''}
